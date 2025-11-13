@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: freelance-postgres
+    environment:
+      POSTGRES_DB: freelance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - freelance-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freelance-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/freelance_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this-in-production-to-a-long-random-string}
+      JWT_EXPIRATION: 86400000
+      FILE_UPLOAD_DIR: /app/uploads
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - freelance-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  app_uploads:
+  app_logs:
+
+networks:
+  freelance-network:
+    driver: bridge
+

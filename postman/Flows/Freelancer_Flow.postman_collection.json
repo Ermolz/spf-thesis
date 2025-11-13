@@ -1,0 +1,184 @@
+{
+	"info": {
+		"_postman_id": "freelancer-flow-001",
+		"name": "Freelancer Flow - Complete Workflow",
+		"description": "Complete workflow for a freelancer: Register → Update Profile → Search Projects → Submit Proposal → Work on Assignment → Get Paid → Request Payout",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Register as Freelancer",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"freelancer@example.com\",\n    \"password\": \"freelancerPass123\",\n    \"role\": \"FREELANCER\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/register",
+					"host": ["{{base_url}}"],
+					"path": ["api", "auth", "register"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 201) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.token) {",
+						"        pm.environment.set(\"freelancer_token\", jsonData.data.token);",
+						"        pm.environment.set(\"freelancer_id\", jsonData.data.userId);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "2. Update Profile",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "PUT",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"displayName\": \"Jane Smith - Full Stack Developer\",\n    \"bio\": \"Experienced developer\",\n    \"skills\": [\"Java\", \"Spring Boot\", \"React\"],\n    \"hourlyRate\": 50.00,\n    \"currency\": \"USD\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/profiles/freelancer/me",
+					"host": ["{{base_url}}"],
+					"path": ["api", "profiles", "freelancer", "me"]
+				}
+			}
+		},
+		{
+			"name": "3. Search Projects",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects/search?status=OPEN&page=0&size=20",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects", "search"],
+					"query": [
+						{"key": "status", "value": "OPEN"},
+						{"key": "page", "value": "0"},
+						{"key": "size", "value": "20"}
+					]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 200) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.content && jsonData.data.content.length > 0) {",
+						"        pm.environment.set(\"flow_project_id\", jsonData.data.content[0].id);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "4. Submit Proposal",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"projectId\": {{flow_project_id}},\n    \"coverLetter\": \"I have extensive experience in this field\",\n    \"bidAmount\": 7500.00\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/proposals",
+					"host": ["{{base_url}}"],
+					"path": ["api", "proposals"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 201) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.id) {",
+						"        pm.environment.set(\"flow_proposal_id\", jsonData.data.id);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "5. Get My Assignments",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/assignments/my?page=0&size=20",
+					"host": ["{{base_url}}"],
+					"path": ["api", "assignments", "my"],
+					"query": [
+						{"key": "page", "value": "0"},
+						{"key": "size", "value": "20"}
+					]
+				}
+			}
+		},
+		{
+			"name": "6. Get My Payments",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/payments/my?page=0&size=20",
+					"host": ["{{base_url}}"],
+					"path": ["api", "payments", "my"],
+					"query": [
+						{"key": "page", "value": "0"},
+						{"key": "size", "value": "20"}
+					]
+				}
+			}
+		},
+		{
+			"name": "7. Get Available Balance",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/payouts/balance",
+					"host": ["{{base_url}}"],
+					"path": ["api", "payouts", "balance"]
+				}
+			}
+		},
+		{
+			"name": "8. Request Payout",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{freelancer_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 1000.00,\n    \"payoutMethod\": \"BANK_TRANSFER\",\n    \"accountDetails\": \"IBAN: GB82WEST12345698765432\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/payouts",
+					"host": ["{{base_url}}"],
+					"path": ["api", "payouts"]
+				}
+			}
+		}
+	],
+	"variable": [{"key": "base_url", "value": "http://localhost:8080", "type": "string"}]
+}
+

@@ -1,0 +1,201 @@
+{
+	"info": {
+		"_postman_id": "client-flow-001",
+		"name": "Client Flow - Complete Project Lifecycle",
+		"description": "Complete workflow for a client: Register → Create Project → Publish → Accept Proposal → Create Assignment → Make Payment → Complete Assignment → Review",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Register as Client",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"client@example.com\",\n    \"password\": \"clientPass123\",\n    \"role\": \"CLIENT\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/register",
+					"host": ["{{base_url}}"],
+					"path": ["api", "auth", "register"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 201) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.token) {",
+						"        pm.environment.set(\"client_token\", jsonData.data.token);",
+						"        pm.environment.set(\"client_id\", jsonData.data.userId);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "2. Create Project",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"E-commerce Website\",\n    \"description\": \"Build a modern e-commerce platform\",\n    \"budgetMin\": 5000.00,\n    \"budgetMax\": 10000.00,\n    \"currency\": \"USD\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/projects",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 201) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.id) {",
+						"        pm.environment.set(\"flow_project_id\", jsonData.data.id);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "3. Publish Project",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects/{{flow_project_id}}/publish",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects", "{{flow_project_id}}", "publish"]
+				}
+			}
+		},
+		{
+			"name": "4. Get Project Proposals",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/proposals/project/{{flow_project_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "proposals", "project", "{{flow_project_id}}"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 200) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.content && jsonData.data.content.length > 0) {",
+						"        pm.environment.set(\"flow_proposal_id\", jsonData.data.content[0].id);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "5. Accept Proposal",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/proposals/{{flow_proposal_id}}/accept",
+					"host": ["{{base_url}}"],
+					"path": ["api", "proposals", "{{flow_proposal_id}}", "accept"]
+				}
+			}
+		},
+		{
+			"name": "6. Create Assignment",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"proposalId\": {{flow_proposal_id}},\n    \"startDate\": \"2024-02-01T00:00:00Z\",\n    \"endDate\": \"2024-05-01T00:00:00Z\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/assignments",
+					"host": ["{{base_url}}"],
+					"path": ["api", "assignments"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"if (pm.response.code === 201) {",
+						"    var jsonData = pm.response.json();",
+						"    if (jsonData.success && jsonData.data && jsonData.data.id) {",
+						"        pm.environment.set(\"flow_assignment_id\", jsonData.data.id);",
+						"    }",
+						"}"
+					]
+				}
+			}]
+		},
+		{
+			"name": "7. Create Escrow Payment",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"assignmentId\": {{flow_assignment_id}},\n    \"amount\": 5000.00,\n    \"type\": \"ESCROW\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/payments",
+					"host": ["{{base_url}}"],
+					"path": ["api", "payments"]
+				}
+			}
+		},
+		{
+			"name": "8. Complete Assignment",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/assignments/{{flow_assignment_id}}/complete",
+					"host": ["{{base_url}}"],
+					"path": ["api", "assignments", "{{flow_assignment_id}}", "complete"]
+				}
+			}
+		},
+		{
+			"name": "9. Create Review",
+			"request": {
+				"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{client_token}}"}]},
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"assignmentId\": {{flow_assignment_id}},\n    \"targetFreelancerId\": 1,\n    \"type\": \"CLIENT_TO_FREELANCER\",\n    \"rating\": 5,\n    \"comment\": \"Excellent work!\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/reviews",
+					"host": ["{{base_url}}"],
+					"path": ["api", "reviews"]
+				}
+			}
+		}
+	],
+	"variable": [{"key": "base_url", "value": "http://localhost:8080", "type": "string"}]
+}
+
