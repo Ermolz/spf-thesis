@@ -178,7 +178,6 @@ public class AssignmentService {
             throw new BadRequestException("Can only complete active assignments", "ASSIGNMENT_NOT_ACTIVE");
         }
 
-        UserPrincipal userPrincipal = getCurrentUser();
         MdcUtil.setUserId(userPrincipal.getId());
         MdcUtil.setOperation("COMPLETE_ASSIGNMENT");
         
@@ -208,7 +207,6 @@ public class AssignmentService {
             throw new BadRequestException("Can only cancel active assignments", "ASSIGNMENT_NOT_ACTIVE");
         }
 
-        UserPrincipal userPrincipal = getCurrentUser();
         MdcUtil.setUserId(userPrincipal.getId());
         MdcUtil.setOperation("CANCEL_ASSIGNMENT");
         

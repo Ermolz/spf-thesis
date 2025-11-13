@@ -158,7 +158,6 @@ public class ProposalService {
             throw new BadRequestException("Project is not open for proposals", "PROJECT_NOT_OPEN");
         }
 
-        UserPrincipal userPrincipal = getCurrentUser();
         MdcUtil.setUserId(userPrincipal.getId());
         MdcUtil.setOperation("ACCEPT_PROPOSAL");
         

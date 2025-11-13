@@ -119,7 +119,6 @@ public class ProjectService {
             project.setStatus(request.getStatus());
             
             // Log status change
-            UserPrincipal userPrincipal = getCurrentUser();
             MdcUtil.setUserId(userPrincipal.getId());
             MdcUtil.setOperation("UPDATE_PROJECT_STATUS");
             log.info("Project status changed: projectId={}, title={}, oldStatus={}, newStatus={}, changedBy={}", 
@@ -207,7 +206,6 @@ public class ProjectService {
             throw new BadRequestException("Only draft projects can be published", "INVALID_STATUS_TRANSITION");
         }
 
-        UserPrincipal userPrincipal = getCurrentUser();
         MdcUtil.setUserId(userPrincipal.getId());
         MdcUtil.setOperation("PUBLISH_PROJECT");
         
