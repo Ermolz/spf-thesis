@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, develop, master ]
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     name: Test
@@ -45,6 +50,12 @@ jobs:
         with:
           files: build/test-results/**/*.xml
           check_name: Test Results
+          comment_mode: always
+          check_run: true
+          job_summary: true
+          report_suite_logs: failure-only
+          check_run_annotations: all tests, skipped tests
+          compare_to_earlier_commit: true
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4

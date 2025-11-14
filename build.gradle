@@ -52,4 +52,25 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    
+    // Generate detailed test reports
+    reports {
+        html.required = true
+        junitXml.required = true
+    }
+    
+    // Show test output in console
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showStackTraces = true
+    }
+    
+    // Fail build on test failures
+    ignoreFailures = false
+    
+    // Show test progress
+    outputs.upToDateWhen { false }
 }
