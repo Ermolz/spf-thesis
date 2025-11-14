@@ -10,21 +10,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: freelance_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - name: Checkout code
@@ -53,9 +38,6 @@ jobs:
         run: ./gradlew test --no-daemon
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/freelance_test
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
