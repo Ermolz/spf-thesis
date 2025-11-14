@@ -9,9 +9,15 @@ import com.example.freelance.dto.user.UpdateFreelancerProfileRequest;
 import com.example.freelance.service.user.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/profiles")
@@ -154,6 +160,53 @@ public class UserProfileController {
             @Valid @RequestBody UpdateClientProfileRequest request) {
         ClientProfileResponse response = userProfileService.updateClientProfile(request);
         return ResponseEntity.ok(ResponseUtil.successWithTimestamp(response));
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Search freelancers",
+            description = """
+                    Searches for freelancers with optional filters. Available to all authenticated users.
+                    
+                    **Search Filters:**
+                    - `minRating`: Minimum rating (1.0 - 5.0)
+                    - `maxRating`: Maximum rating (1.0 - 5.0)
+                    - `minHourlyRate`: Minimum hourly rate
+                    - `maxHourlyRate`: Maximum hourly rate
+                    - `currency`: Currency code (e.g., USD, EUR)
+                    - `skills`: List of skills (freelancer must have at least one of these skills)
+                    
+                    **Pagination:**
+                    - Default page size: 20
+                    - Default sort: rating DESC, completedProjectsCount DESC
+                    """,
+            parameters = {
+                    @io.swagger.v3.oas.annotations.Parameter(name = "minRating", description = "Minimum rating filter", example = "4.0"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "maxRating", description = "Maximum rating filter", example = "5.0"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "minHourlyRate", description = "Minimum hourly rate filter", example = "20.00"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "maxHourlyRate", description = "Maximum hourly rate filter", example = "100.00"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "currency", description = "Currency code filter", example = "USD"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "skills", description = "Skills filter (comma-separated or multiple params)", example = "Java,Spring"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "page", description = "Page number (0-indexed)", example = "0"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "size", description = "Page size", example = "20"),
+                    @io.swagger.v3.oas.annotations.Parameter(name = "sort", description = "Sort field and direction", example = "rating,desc")
+            }
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Search results retrieved successfully")
+    })
+    @GetMapping("/freelancers/search")
+    public ResponseEntity<ApiResponse<Page<FreelancerProfileResponse>>> searchFreelancers(
+            @RequestParam(required = false) BigDecimal minRating,
+            @RequestParam(required = false) BigDecimal maxRating,
+            @RequestParam(required = false) BigDecimal minHourlyRate,
+            @RequestParam(required = false) BigDecimal maxHourlyRate,
+            @RequestParam(required = false) String currency,
+            @RequestParam(required = false) List<String> skills,
+            @PageableDefault(size = 20, sort = {"rating", "completedProjectsCount"}, 
+                           direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<FreelancerProfileResponse> response = userProfileService.searchFreelancers(
+                minRating, maxRating, minHourlyRate, maxHourlyRate, currency, skills, pageable);
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 }
 

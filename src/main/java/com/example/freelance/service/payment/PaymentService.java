@@ -55,22 +55,7 @@ public class PaymentService {
         }
 
         if (request.getType() == PaymentType.RELEASE) {
-            BigDecimal totalEscrow = BigDecimal.ZERO;
-            BigDecimal totalReleased = BigDecimal.ZERO;
-
-            for (Payment payment : paymentRepository.findByAssignmentId(assignment.getId(), Pageable.unpaged()).getContent()) {
-                if (payment.getStatus() == PaymentStatus.COMPLETED) {
-                    if (payment.getType() == PaymentType.ESCROW) {
-                        totalEscrow = totalEscrow.add(payment.getAmount());
-                    } else if (payment.getType() == PaymentType.RELEASE) {
-                        totalReleased = totalReleased.add(payment.getAmount());
-                    }
-                }
-            }
-
-            if (totalReleased.add(request.getAmount()).compareTo(totalEscrow) > 0) {
-                throw new BadRequestException("Cannot release more than available in escrow", "INSUFFICIENT_ESCROW");
-            }
+            validateEscrowRelease(assignment.getId(), request.getAmount());
         }
 
         Payment payment = new Payment();
@@ -152,6 +137,25 @@ public class PaymentService {
 
     private UserPrincipal getCurrentUser() {
         return (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    private void validateEscrowRelease(Long assignmentId, BigDecimal releaseAmount) {
+        BigDecimal totalEscrow = BigDecimal.ZERO;
+        BigDecimal totalReleased = BigDecimal.ZERO;
+
+        for (Payment payment : paymentRepository.findByAssignmentId(assignmentId, Pageable.unpaged()).getContent()) {
+            if (payment.getStatus() == PaymentStatus.COMPLETED) {
+                if (payment.getType() == PaymentType.ESCROW) {
+                    totalEscrow = totalEscrow.add(payment.getAmount());
+                } else if (payment.getType() == PaymentType.RELEASE) {
+                    totalReleased = totalReleased.add(payment.getAmount());
+                }
+            }
+        }
+
+        if (totalReleased.add(releaseAmount).compareTo(totalEscrow) > 0) {
+            throw new BadRequestException("Cannot release more than available in escrow", "INSUFFICIENT_ESCROW");
+        }
     }
 
     private PaymentResponse mapToResponse(Payment payment) {

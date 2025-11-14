@@ -8,13 +8,16 @@ import com.example.freelance.domain.project.Project;
 import com.example.freelance.domain.project.ProjectStatus;
 import com.example.freelance.domain.proposal.Proposal;
 import com.example.freelance.domain.proposal.ProposalStatus;
+import com.example.freelance.domain.user.ClientProfile;
 import com.example.freelance.domain.user.FreelancerProfile;
 import com.example.freelance.dto.proposal.CreateProposalRequest;
 import com.example.freelance.dto.proposal.ProposalResponse;
 import com.example.freelance.dto.proposal.UpdateProposalRequest;
+import com.example.freelance.dto.project.InviteFreelancerRequest;
 import com.example.freelance.mapper.proposal.ProposalMapper;
 import com.example.freelance.repository.project.ProjectRepository;
 import com.example.freelance.repository.proposal.ProposalRepository;
+import com.example.freelance.repository.user.ClientProfileRepository;
 import com.example.freelance.repository.user.FreelancerProfileRepository;
 import com.example.freelance.common.util.MdcUtil;
 import com.example.freelance.security.UserPrincipal;
@@ -32,9 +35,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProposalService {
+    private static final String PROJECT_RESOURCE_NAME = "Project";
+    private static final String PROPOSAL_RESOURCE_NAME = "Proposal";
     private final ProposalRepository proposalRepository;
     private final ProjectRepository projectRepository;
     private final FreelancerProfileRepository freelancerProfileRepository;
+    private final ClientProfileRepository clientProfileRepository;
     private final ProposalMapper proposalMapper;
 
     @Transactional
@@ -43,7 +49,7 @@ public class ProposalService {
         FreelancerProfile freelancer = getFreelancerProfile(userPrincipal.getId());
 
         Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new NotFoundException("Project", request.getProjectId().toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, request.getProjectId().toString()));
 
         if (project.getStatus() != ProjectStatus.OPEN) {
             throw new BadRequestException("Can only submit proposals to open projects", "PROJECT_NOT_OPEN");
@@ -75,7 +81,7 @@ public class ProposalService {
         FreelancerProfile freelancer = getFreelancerProfile(userPrincipal.getId());
 
         Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new NotFoundException("Proposal", proposalId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROPOSAL_RESOURCE_NAME, proposalId.toString()));
 
         if (!proposal.getFreelancer().getId().equals(freelancer.getId())) {
             throw new ForbiddenException("Can only update your own proposals", "NOT_PROPOSAL_OWNER");
@@ -102,7 +108,7 @@ public class ProposalService {
     @Transactional(readOnly = true)
     public ProposalResponse getProposalById(Long proposalId) {
         Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new NotFoundException("Proposal", proposalId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROPOSAL_RESOURCE_NAME, proposalId.toString()));
 
         UserPrincipal userPrincipal = getCurrentUser();
         boolean isOwner = proposal.getFreelancer().getUser().getId().equals(userPrincipal.getId());
@@ -127,7 +133,7 @@ public class ProposalService {
     @Transactional(readOnly = true)
     public Page<ProposalResponse> getProjectProposals(Long projectId, Pageable pageable) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project", projectId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
 
         UserPrincipal userPrincipal = getCurrentUser();
         if (!project.getClient().getUser().getId().equals(userPrincipal.getId())) {
@@ -142,7 +148,7 @@ public class ProposalService {
     public ProposalResponse acceptProposal(Long proposalId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new NotFoundException("Proposal", proposalId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROPOSAL_RESOURCE_NAME, proposalId.toString()));
 
         Project project = proposal.getProject();
 
@@ -189,7 +195,7 @@ public class ProposalService {
     public ProposalResponse rejectProposal(Long proposalId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new NotFoundException("Proposal", proposalId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROPOSAL_RESOURCE_NAME, proposalId.toString()));
 
         Project project = proposal.getProject();
 
@@ -221,7 +227,7 @@ public class ProposalService {
         FreelancerProfile freelancer = getFreelancerProfile(userPrincipal.getId());
 
         Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new NotFoundException("Proposal", proposalId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROPOSAL_RESOURCE_NAME, proposalId.toString()));
 
         if (!proposal.getFreelancer().getId().equals(freelancer.getId())) {
             throw new ForbiddenException("Can only withdraw your own proposals", "NOT_PROPOSAL_OWNER");
@@ -252,6 +258,59 @@ public class ProposalService {
     private FreelancerProfile getFreelancerProfile(Long userId) {
         return freelancerProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ForbiddenException("Only freelancers can submit proposals", "FREELANCER_PROFILE_REQUIRED"));
+    }
+
+    @Transactional
+    public ProposalResponse inviteFreelancer(Long projectId, InviteFreelancerRequest request) {
+        UserPrincipal userPrincipal = getCurrentUser();
+        ClientProfile client = getClientProfile(userPrincipal.getId());
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
+
+        if (!project.getClient().getId().equals(client.getId())) {
+            throw new ForbiddenException("Can only invite freelancers to your own projects", "NOT_PROJECT_OWNER");
+        }
+
+        if (project.getStatus() != ProjectStatus.OPEN && project.getStatus() != ProjectStatus.DRAFT) {
+            throw new BadRequestException("Can only invite freelancers to open or draft projects", "INVALID_PROJECT_STATUS");
+        }
+
+        FreelancerProfile freelancer = freelancerProfileRepository.findById(request.getFreelancerId())
+                .orElseThrow(() -> new NotFoundException("FreelancerProfile", request.getFreelancerId().toString()));
+
+        if (proposalRepository.existsByProjectIdAndFreelancerId(project.getId(), freelancer.getId())) {
+            throw new ConflictException("Proposal already exists for this freelancer and project", "PROPOSAL_ALREADY_EXISTS");
+        }
+
+        // If project is DRAFT, publish it first
+        if (project.getStatus() == ProjectStatus.DRAFT) {
+            project.setStatus(ProjectStatus.OPEN);
+            projectRepository.save(project);
+        }
+
+        Proposal proposal = new Proposal();
+        proposal.setProject(project);
+        proposal.setFreelancer(freelancer);
+        proposal.setCoverLetter("Invitation from client: " + request.getMessage());
+        proposal.setBidAmount(request.getSuggestedBidAmount() != null ? request.getSuggestedBidAmount() : project.getBudgetMin());
+        proposal.setEstimatedDuration(request.getEstimatedDuration());
+        proposal.setStatus(ProposalStatus.PENDING);
+
+        proposal = proposalRepository.save(proposal);
+
+        MdcUtil.setUserId(userPrincipal.getId());
+        MdcUtil.setOperation("INVITE_FREELANCER");
+        log.info("Freelancer invited: proposalId={}, projectId={}, freelancerId={}, clientId={}", 
+                proposal.getId(), projectId, freelancer.getId(), client.getId());
+        MdcUtil.clearCustomValues();
+
+        return mapToResponse(proposal);
+    }
+
+    private ClientProfile getClientProfile(Long userId) {
+        return clientProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ForbiddenException("Only clients can invite freelancers", "CLIENT_PROFILE_REQUIRED"));
     }
 
     private ProposalResponse mapToResponse(Proposal proposal) {

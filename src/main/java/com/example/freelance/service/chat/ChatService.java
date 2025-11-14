@@ -33,11 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+    private static final String CONVERSATION_RESOURCE_NAME = "Conversation";
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final ProjectRepository projectRepository;
@@ -56,51 +56,14 @@ public class ChatService {
             throw new BadRequestException("Either projectId or assignmentId must be provided", "INVALID_CONVERSATION_REQUEST");
         }
 
-        Project project = null;
-        Assignment assignment = null;
-        ClientProfile client = null;
-        FreelancerProfile freelancer = null;
-
-        if (request.getProjectId() != null) {
-            project = projectRepository.findById(request.getProjectId())
-                    .orElseThrow(() -> new NotFoundException("Project", request.getProjectId().toString()));
-
-            if (request.getFreelancerId() == null) {
-                throw new BadRequestException("Freelancer ID is required when creating conversation for project", "FREELANCER_ID_REQUIRED");
-            }
-
-            client = project.getClient();
-            freelancer = freelancerProfileRepository.findById(request.getFreelancerId())
-                    .orElseThrow(() -> new NotFoundException("FreelancerProfile", request.getFreelancerId().toString()));
-
-            if (client.getUser().getId().equals(userPrincipal.getId()) && 
-                freelancer.getUser().getId().equals(userPrincipal.getId())) {
-                throw new BadRequestException("Cannot create conversation with yourself", "CANNOT_CHAT_WITH_YOURSELF");
-            }
-
-            if (!client.getUser().getId().equals(userPrincipal.getId()) && 
-                !freelancer.getUser().getId().equals(userPrincipal.getId())) {
-                throw new ForbiddenException("Access denied to this project", "ACCESS_DENIED");
-            }
-        } else if (request.getAssignmentId() != null) {
-            assignment = assignmentRepository.findById(request.getAssignmentId())
-                    .orElseThrow(() -> new NotFoundException("Assignment", request.getAssignmentId().toString()));
-
-            client = assignment.getProject().getClient();
-            freelancer = assignment.getFreelancer();
-
-            if (!client.getUser().getId().equals(userPrincipal.getId()) &&
-                !freelancer.getUser().getId().equals(userPrincipal.getId())) {
-                throw new ForbiddenException("Access denied to this assignment", "ACCESS_DENIED");
-            }
-        }
-
+        ConversationParticipants participants = determineParticipants(request, userPrincipal);
+        
         Optional<Conversation> existingConversation = conversationRepository
                 .findByProjectOrAssignmentAndParticipants(
                         request.getProjectId(),
                         request.getAssignmentId(),
-                        client.getId(),
-                        freelancer.getId()
+                        participants.client().getId(),
+                        participants.freelancer().getId()
                 );
 
         if (existingConversation.isPresent()) {
@@ -108,14 +71,75 @@ public class ChatService {
         }
 
         Conversation conversation = new Conversation();
-        conversation.setProject(project);
-        conversation.setAssignment(assignment);
-        conversation.setClient(client);
-        conversation.setFreelancer(freelancer);
+        conversation.setProject(participants.project());
+        conversation.setAssignment(participants.assignment());
+        conversation.setClient(participants.client());
+        conversation.setFreelancer(participants.freelancer());
 
         conversation = conversationRepository.save(conversation);
         return mapConversationToResponse(conversation, userPrincipal.getId());
     }
+
+    private ConversationParticipants determineParticipants(CreateConversationRequest request, UserPrincipal userPrincipal) {
+        if (request.getProjectId() != null) {
+            return determineParticipantsFromProject(request, userPrincipal);
+        } else if (request.getAssignmentId() != null) {
+            return determineParticipantsFromAssignment(request, userPrincipal);
+        }
+        throw new BadRequestException("Client and freelancer must be determined", "INVALID_CONVERSATION_REQUEST");
+    }
+
+    private ConversationParticipants determineParticipantsFromProject(CreateConversationRequest request, UserPrincipal userPrincipal) {
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new NotFoundException("Project", request.getProjectId().toString()));
+
+        if (request.getFreelancerId() == null) {
+            throw new BadRequestException("Freelancer ID is required when creating conversation for project", "FREELANCER_ID_REQUIRED");
+        }
+
+        ClientProfile client = project.getClient();
+        if (client == null) {
+            throw new NotFoundException("ClientProfile", "for project " + request.getProjectId());
+        }
+        
+        FreelancerProfile freelancer = freelancerProfileRepository.findById(request.getFreelancerId())
+                .orElseThrow(() -> new NotFoundException("FreelancerProfile", request.getFreelancerId().toString()));
+
+        validateParticipants(userPrincipal, client, freelancer, "project");
+
+        return new ConversationParticipants(project, null, client, freelancer);
+    }
+
+    private ConversationParticipants determineParticipantsFromAssignment(CreateConversationRequest request, UserPrincipal userPrincipal) {
+        Assignment assignment = assignmentRepository.findById(request.getAssignmentId())
+                .orElseThrow(() -> new NotFoundException("Assignment", request.getAssignmentId().toString()));
+
+        ClientProfile client = assignment.getProject().getClient();
+        if (client == null) {
+            throw new NotFoundException("ClientProfile", "for assignment " + request.getAssignmentId());
+        }
+        
+        FreelancerProfile freelancer = assignment.getFreelancer();
+
+        validateParticipants(userPrincipal, client, freelancer, "assignment");
+
+        return new ConversationParticipants(assignment.getProject(), assignment, client, freelancer);
+    }
+
+    private void validateParticipants(UserPrincipal userPrincipal, ClientProfile client, FreelancerProfile freelancer, String context) {
+        if (client.getUser().getId().equals(userPrincipal.getId()) && 
+            freelancer.getUser().getId().equals(userPrincipal.getId())) {
+            throw new BadRequestException("Cannot create conversation with yourself", "CANNOT_CHAT_WITH_YOURSELF");
+        }
+
+        boolean hasAccess = client.getUser().getId().equals(userPrincipal.getId()) || 
+                           freelancer.getUser().getId().equals(userPrincipal.getId());
+        if (!hasAccess) {
+            throw new ForbiddenException("Access denied to this " + context, "ACCESS_DENIED");
+        }
+    }
+
+    private record ConversationParticipants(Project project, Assignment assignment, ClientProfile client, FreelancerProfile freelancer) {}
 
     @Transactional
     public MessageResponse sendMessage(SendMessageRequest request) {
@@ -124,7 +148,7 @@ public class ChatService {
                 .orElseThrow(() -> new NotFoundException("User", userPrincipal.getId().toString()));
 
         Conversation conversation = conversationRepository.findById(request.getConversationId())
-                .orElseThrow(() -> new NotFoundException("Conversation", request.getConversationId().toString()));
+                .orElseThrow(() -> new NotFoundException(CONVERSATION_RESOURCE_NAME, request.getConversationId().toString()));
 
         boolean isClient = conversation.getClient().getUser().getId().equals(userPrincipal.getId());
         boolean isFreelancer = conversation.getFreelancer().getUser().getId().equals(userPrincipal.getId());
@@ -147,7 +171,7 @@ public class ChatService {
     public Page<MessageResponse> getConversationMessages(Long conversationId, Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new NotFoundException("Conversation", conversationId.toString()));
+                .orElseThrow(() -> new NotFoundException(CONVERSATION_RESOURCE_NAME, conversationId.toString()));
 
         boolean isClient = conversation.getClient().getUser().getId().equals(userPrincipal.getId());
         boolean isFreelancer = conversation.getFreelancer().getUser().getId().equals(userPrincipal.getId());
@@ -170,14 +194,14 @@ public class ChatService {
 
         return conversations.stream()
                 .map(c -> mapConversationToResponse(c, userPrincipal.getId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public ConversationResponse getConversationById(Long conversationId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new NotFoundException("Conversation", conversationId.toString()));
+                .orElseThrow(() -> new NotFoundException(CONVERSATION_RESOURCE_NAME, conversationId.toString()));
 
         boolean isClient = conversation.getClient().getUser().getId().equals(userPrincipal.getId());
         boolean isFreelancer = conversation.getFreelancer().getUser().getId().equals(userPrincipal.getId());

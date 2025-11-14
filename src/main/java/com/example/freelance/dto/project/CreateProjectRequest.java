@@ -2,7 +2,6 @@ package com.example.freelance.dto.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -20,25 +19,25 @@ import java.util.List;
 public class CreateProjectRequest {
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title must not exceed 255 characters")
-    @Schema(description = "Project title", example = "E-commerce Website Development", required = true, maxLength = 255)
+    @Schema(description = "Project title", example = "E-commerce Website Development", maxLength = 255)
     private String title;
 
     @NotBlank(message = "Description is required")
     @Size(max = 5000, message = "Description must not exceed 5000 characters")
-    @Schema(description = "Detailed project description", example = "Looking for an experienced developer to build a modern e-commerce platform...", required = true, maxLength = 5000)
+    @Schema(description = "Detailed project description", example = "Looking for an experienced developer to build a modern e-commerce platform...", maxLength = 5000)
     private String description;
 
     @Positive(message = "Minimum budget must be positive")
-    @Schema(description = "Minimum budget amount", example = "5000.00", required = true)
+    @Schema(description = "Minimum budget amount", example = "5000.00")
     private BigDecimal budgetMin;
 
     @Positive(message = "Maximum budget must be positive")
-    @Schema(description = "Maximum budget amount", example = "10000.00", required = true)
+    @Schema(description = "Maximum budget amount", example = "10000.00")
     private BigDecimal budgetMax;
 
     @NotBlank(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency must be 3 characters")
-    @Schema(description = "Currency code (ISO 4217, 3 letters)", example = "USD", required = true, minLength = 3, maxLength = 3)
+    @Schema(description = "Currency code (ISO 4217, 3 letters)", example = "USD", minLength = 3, maxLength = 3)
     private String currency;
 
     @Schema(description = "Category ID (optional)", example = "1")

@@ -51,6 +51,7 @@ import java.util.List;
 @Profile("dev")
 @RequiredArgsConstructor
 public class DataInitializer {
+    private static final String FREELANCER_PASSWORD = "freelancer123";
 
     private final UserRepository userRepository;
     private final FreelancerProfileRepository freelancerProfileRepository;
@@ -81,19 +82,19 @@ public class DataInitializer {
             Category mobileDev = createCategory("Mobile Development", "iOS and Android applications");
             Category design = createCategory("Design", "UI/UX design and graphics");
             Category marketing = createCategory("Marketing", "Digital marketing and SEO");
-            Category writing = createCategory("Writing", "Content writing and copywriting");
+            createCategory("Writing", "Content writing and copywriting");
 
             // Create Tags
-            Tag javaTag = createTag("Java");
-            Tag springTag = createTag("Spring Boot");
+            createTag("Java");
+            createTag("Spring Boot");
             Tag reactTag = createTag("React");
             Tag nodeTag = createTag("Node.js");
             Tag postgresTag = createTag("PostgreSQL");
-            Tag dockerTag = createTag("Docker");
+            createTag("Docker");
             Tag figmaTag = createTag("Figma");
             Tag photoshopTag = createTag("Photoshop");
             Tag seoTag = createTag("SEO");
-            Tag contentTag = createTag("Content Writing");
+            createTag("Content Writing");
 
             // Create Users - Clients
             User client1 = createUser("client1@example.com", "client123", Role.CLIENT);
@@ -103,7 +104,7 @@ public class DataInitializer {
             ClientProfile clientProfile2 = createClientProfile(client2, "StartupXYZ", "Innovative startup company");
 
             // Create Users - Freelancers
-            User freelancer1 = createUser("freelancer1@example.com", "freelancer123", Role.FREELANCER);
+            User freelancer1 = createUser("freelancer1@example.com", FREELANCER_PASSWORD, Role.FREELANCER);
             FreelancerProfile freelancerProfile1 = createFreelancerProfile(
                     freelancer1,
                     "John Doe - Full Stack Developer",
@@ -113,7 +114,7 @@ public class DataInitializer {
                     "USD"
             );
 
-            User freelancer2 = createUser("freelancer2@example.com", "freelancer123", Role.FREELANCER);
+            User freelancer2 = createUser("freelancer2@example.com", FREELANCER_PASSWORD, Role.FREELANCER);
             FreelancerProfile freelancerProfile2 = createFreelancerProfile(
                     freelancer2,
                     "Jane Smith - UI/UX Designer",
@@ -123,8 +124,8 @@ public class DataInitializer {
                     "USD"
             );
 
-            User freelancer3 = createUser("freelancer3@example.com", "freelancer123", Role.FREELANCER);
-            FreelancerProfile freelancerProfile3 = createFreelancerProfile(
+            User freelancer3 = createUser("freelancer3@example.com", FREELANCER_PASSWORD, Role.FREELANCER);
+            createFreelancerProfile(
                     freelancer3,
                     "Mike Johnson - Content Writer",
                     "Professional content writer and copywriter",
@@ -147,7 +148,7 @@ public class DataInitializer {
                     ProjectStatus.OPEN
             );
 
-            Project project2 = createProject(
+            createProject(
                     clientProfile1,
                     "Mobile App for iOS and Android",
                     "Need a mobile app developer to create a cross-platform mobile application for both iOS and Android platforms.",
@@ -173,7 +174,7 @@ public class DataInitializer {
                     ProjectStatus.OPEN
             );
 
-            Project project4 = createProject(
+            createProject(
                     clientProfile2,
                     "SEO Optimization Project",
                     "Need an SEO expert to optimize our website and improve search engine rankings.",
@@ -195,7 +196,7 @@ public class DataInitializer {
                     ProposalStatus.ACCEPTED
             );
 
-            Proposal proposal2 = createProposal(
+            createProposal(
                     project1,
                     freelancerProfile2,
                     "I can help with the design aspects of your e-commerce platform.",
@@ -231,7 +232,7 @@ public class DataInitializer {
             );
 
             // Create Tasks
-            Task task1 = createTask(
+            createTask(
                     assignment1,
                     "Setup development environment",
                     "Install and configure all necessary tools and dependencies for the project",
@@ -239,7 +240,7 @@ public class DataInitializer {
                     Instant.now().plus(20, ChronoUnit.DAYS)
             );
 
-            Task task2 = createTask(
+            createTask(
                     assignment1,
                     "Implement user authentication",
                     "Create login, registration, and password reset functionality",
@@ -247,7 +248,7 @@ public class DataInitializer {
                     Instant.now().plus(30, ChronoUnit.DAYS)
             );
 
-            Task task3 = createTask(
+            createTask(
                     assignment1,
                     "Design database schema",
                     "Create database tables and relationships for the e-commerce platform",
@@ -255,7 +256,7 @@ public class DataInitializer {
                     Instant.now().plus(15, ChronoUnit.DAYS)
             );
 
-            Task task4 = createTask(
+            createTask(
                     assignment2,
                     "Create wireframes",
                     "Design initial wireframes for the website redesign",
@@ -263,7 +264,7 @@ public class DataInitializer {
                     Instant.now().plus(10, ChronoUnit.DAYS)
             );
 
-            Task task5 = createTask(
+            createTask(
                     assignment2,
                     "Design mockups",
                     "Create high-fidelity mockups based on wireframes",
@@ -272,21 +273,21 @@ public class DataInitializer {
             );
 
             // Create Payments
-            Payment payment1 = createPayment(
+            createPayment(
                     assignment1,
                     new BigDecimal("5000.00"),
                     PaymentType.ESCROW,
                     PaymentStatus.COMPLETED
             );
 
-            Payment payment2 = createPayment(
+            createPayment(
                     assignment1,
                     new BigDecimal("2500.00"),
                     PaymentType.RELEASE,
                     PaymentStatus.COMPLETED
             );
 
-            Payment payment3 = createPayment(
+            createPayment(
                     assignment2,
                     new BigDecimal("2000.00"),
                     PaymentType.ESCROW,
@@ -294,7 +295,7 @@ public class DataInitializer {
             );
 
             // Create Reviews
-            Review review1 = createReview(
+            createReview(
                     client1,
                     freelancerProfile1,
                     null,
@@ -304,7 +305,7 @@ public class DataInitializer {
                     "Excellent work! Very professional and delivered on time. Highly recommended!"
             );
 
-            Review review2 = createReview(
+            createReview(
                     freelancer1,
                     null,
                     clientProfile1,
@@ -383,19 +384,38 @@ public class DataInitializer {
     private Project createProject(ClientProfile client, String title, String description,
                                   BigDecimal budgetMin, BigDecimal budgetMax, String currency,
                                   Category category, List<Tag> tags, Instant deadline, ProjectStatus status) {
+        ProjectData projectData = new ProjectData(client, title, description, budgetMin, budgetMax, 
+                currency, category, tags, deadline, status);
+        return createProject(projectData);
+    }
+
+    private Project createProject(ProjectData data) {
         Project project = new Project();
-        project.setClient(client);
-        project.setTitle(title);
-        project.setDescription(description);
-        project.setBudgetMin(budgetMin);
-        project.setBudgetMax(budgetMax);
-        project.setCurrency(currency);
-        project.setCategory(category);
-        project.setTags(tags);
-        project.setDeadline(deadline);
-        project.setStatus(status);
+        project.setClient(data.client());
+        project.setTitle(data.title());
+        project.setDescription(data.description());
+        project.setBudgetMin(data.budgetMin());
+        project.setBudgetMax(data.budgetMax());
+        project.setCurrency(data.currency());
+        project.setCategory(data.category());
+        project.setTags(data.tags());
+        project.setDeadline(data.deadline());
+        project.setStatus(data.status());
         return projectRepository.save(project);
     }
+
+    private record ProjectData(
+            ClientProfile client,
+            String title,
+            String description,
+            BigDecimal budgetMin,
+            BigDecimal budgetMax,
+            String currency,
+            Category category,
+            List<Tag> tags,
+            Instant deadline,
+            ProjectStatus status
+    ) {}
 
     private Proposal createProposal(Project project, FreelancerProfile freelancer, String coverLetter,
                                     BigDecimal bidAmount, ProposalStatus status) {

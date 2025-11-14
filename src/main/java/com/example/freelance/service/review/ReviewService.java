@@ -96,7 +96,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getFreelancerReviews(Long freelancerId, Pageable pageable) {
-        FreelancerProfile freelancer = freelancerProfileRepository.findById(freelancerId)
+        freelancerProfileRepository.findById(freelancerId)
                 .orElseThrow(() -> new NotFoundException("FreelancerProfile", freelancerId.toString()));
 
         Page<Review> reviews = reviewRepository.findByTargetFreelancerId(freelancerId, pageable);
@@ -105,7 +105,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getClientReviews(Long clientId, Pageable pageable) {
-        ClientProfile client = clientProfileRepository.findById(clientId)
+        clientProfileRepository.findById(clientId)
                 .orElseThrow(() -> new NotFoundException("ClientProfile", clientId.toString()));
 
         Page<Review> reviews = reviewRepository.findByTargetClientId(clientId, pageable);

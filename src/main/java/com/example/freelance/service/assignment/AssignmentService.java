@@ -79,11 +79,13 @@ public class AssignmentService {
         return mapToResponse(assignment);
     }
 
+    private static final String ASSIGNMENT_RESOURCE_NAME = "Assignment";
+
     @Transactional
     public AssignmentResponse updateAssignment(Long assignmentId, UpdateAssignmentRequest request) {
         UserPrincipal userPrincipal = getCurrentUser();
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment", assignmentId.toString()));
+                .orElseThrow(() -> new NotFoundException(ASSIGNMENT_RESOURCE_NAME, assignmentId.toString()));
 
         boolean isClient = assignment.getProject().getClient().getUser().getId().equals(userPrincipal.getId());
         boolean isFreelancer = assignment.getFreelancer().getUser().getId().equals(userPrincipal.getId());
@@ -118,7 +120,7 @@ public class AssignmentService {
     @Transactional(readOnly = true)
     public AssignmentResponse getAssignmentById(Long assignmentId) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment", assignmentId.toString()));
+                .orElseThrow(() -> new NotFoundException(ASSIGNMENT_RESOURCE_NAME, assignmentId.toString()));
 
         UserPrincipal userPrincipal = getCurrentUser();
         boolean isClient = assignment.getProject().getClient().getUser().getId().equals(userPrincipal.getId());
@@ -134,7 +136,7 @@ public class AssignmentService {
     @Transactional(readOnly = true)
     public AssignmentResponse getAssignmentByProjectId(Long projectId) {
         Assignment assignment = assignmentRepository.findByProjectId(projectId)
-                .orElseThrow(() -> new NotFoundException("Assignment", "for project " + projectId));
+                .orElseThrow(() -> new NotFoundException(ASSIGNMENT_RESOURCE_NAME, "for project " + projectId));
 
         UserPrincipal userPrincipal = getCurrentUser();
         boolean isClient = assignment.getProject().getClient().getUser().getId().equals(userPrincipal.getId());
@@ -150,22 +152,22 @@ public class AssignmentService {
     @Transactional(readOnly = true)
     public Page<AssignmentResponse> getMyAssignments(Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
-        Page<Assignment> assignments = assignmentRepository.findByFreelancerId(userPrincipal.getId(), pageable);
-        return assignments.map(this::mapToResponse);
+        Page<Assignment> assignmentPage = assignmentRepository.findByFreelancerId(userPrincipal.getId(), pageable);
+        return assignmentPage.map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<AssignmentResponse> getClientAssignments(Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
-        Page<Assignment> assignments = assignmentRepository.findByClientId(userPrincipal.getId(), pageable);
-        return assignments.map(this::mapToResponse);
+        Page<Assignment> assignmentPage = assignmentRepository.findByClientId(userPrincipal.getId(), pageable);
+        return assignmentPage.map(this::mapToResponse);
     }
 
     @Transactional
     public AssignmentResponse completeAssignment(Long assignmentId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment", assignmentId.toString()));
+                .orElseThrow(() -> new NotFoundException(ASSIGNMENT_RESOURCE_NAME, assignmentId.toString()));
 
         boolean isClient = assignment.getProject().getClient().getUser().getId().equals(userPrincipal.getId());
         boolean isFreelancer = assignment.getFreelancer().getUser().getId().equals(userPrincipal.getId());
@@ -197,7 +199,7 @@ public class AssignmentService {
     public AssignmentResponse cancelAssignment(Long assignmentId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment", assignmentId.toString()));
+                .orElseThrow(() -> new NotFoundException(ASSIGNMENT_RESOURCE_NAME, assignmentId.toString()));
 
         if (!assignment.getProject().getClient().getUser().getId().equals(userPrincipal.getId())) {
             throw new ForbiddenException("Only project owner can cancel assignment", "NOT_PROJECT_OWNER");

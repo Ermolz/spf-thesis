@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface ProjectMapper {
@@ -27,7 +26,7 @@ public interface ProjectMapper {
         }
         return tags.stream()
                 .map(Tag::getName)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
 

@@ -20,7 +20,6 @@ public class MdcFilter extends OncePerRequestFilter {
 
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
     private static final String TRACE_ID_MDC_KEY = "traceId";
-    private static final String USER_ID_MDC_KEY = "userId";
     private static final String REQUEST_PATH_MDC_KEY = "requestPath";
     private static final String REQUEST_METHOD_MDC_KEY = "requestMethod";
 

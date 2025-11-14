@@ -14,11 +14,11 @@ import lombok.NoArgsConstructor;
 public class LoginRequest {
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
-    @Schema(description = "User email address", example = "john.doe@example.com", required = true)
+    @Schema(description = "User email address", example = "john.doe@example.com")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Schema(description = "User password", example = "securePass123", required = true)
+    @Schema(description = "User password", example = "securePass123")
     private String password;
 }
 

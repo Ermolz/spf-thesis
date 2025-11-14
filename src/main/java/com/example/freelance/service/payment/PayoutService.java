@@ -28,6 +28,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PayoutService {
+    private static final String FREELANCER_PROFILE_NOT_FOUND_MESSAGE = "Freelancer profile not found";
+    private static final String FREELANCER_PROFILE_NOT_FOUND_CODE = "FREELANCER_PROFILE_NOT_FOUND";
     private final PayoutRepository payoutRepository;
     private final PaymentRepository paymentRepository;
     private final FreelancerProfileRepository freelancerProfileRepository;
@@ -38,9 +40,6 @@ public class PayoutService {
         UserPrincipal userPrincipal = getCurrentUser();
         MdcUtil.setUserId(userPrincipal.getId());
         MdcUtil.setOperation("CREATE_PAYOUT");
-        
-        var freelancer = freelancerProfileRepository.findByUserId(userPrincipal.getId())
-                .orElseThrow(() -> new ForbiddenException("Freelancer profile not found", "FREELANCER_PROFILE_NOT_FOUND"));
         
         log.info("Creating payout: freelancerId={}, amount={}, currency={}, method={}", 
                 userPrincipal.getId(), request.getAmount(), request.getCurrency(), request.getPayoutMethod());
@@ -69,6 +68,9 @@ public class PayoutService {
             );
         }
 
+        var freelancer = freelancerProfileRepository.findByUserId(userPrincipal.getId())
+                .orElseThrow(() -> new ForbiddenException(FREELANCER_PROFILE_NOT_FOUND_MESSAGE, FREELANCER_PROFILE_NOT_FOUND_CODE));
+        
         Payout payout = new Payout();
         payout.setFreelancer(freelancer);
         payout.setAmount(request.getAmount());
@@ -117,7 +119,7 @@ public class PayoutService {
     public Page<PayoutResponse> getMyPayouts(Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
         var freelancer = freelancerProfileRepository.findByUserId(userPrincipal.getId())
-                .orElseThrow(() -> new ForbiddenException("Freelancer profile not found", "FREELANCER_PROFILE_NOT_FOUND"));
+                .orElseThrow(() -> new ForbiddenException(FREELANCER_PROFILE_NOT_FOUND_MESSAGE, FREELANCER_PROFILE_NOT_FOUND_CODE));
 
         Page<Payout> payouts = payoutRepository.findByFreelancerId(freelancer.getId(), pageable);
         return payouts.map(this::mapToResponse);
@@ -126,8 +128,8 @@ public class PayoutService {
     @Transactional(readOnly = true)
     public BigDecimal getAvailableBalance() {
         UserPrincipal userPrincipal = getCurrentUser();
-        var freelancer = freelancerProfileRepository.findByUserId(userPrincipal.getId())
-                .orElseThrow(() -> new ForbiddenException("Freelancer profile not found", "FREELANCER_PROFILE_NOT_FOUND"));
+        freelancerProfileRepository.findByUserId(userPrincipal.getId())
+                .orElseThrow(() -> new ForbiddenException(FREELANCER_PROFILE_NOT_FOUND_MESSAGE, FREELANCER_PROFILE_NOT_FOUND_CODE));
 
         BigDecimal totalEarned = paymentRepository.sumByFreelancerId(userPrincipal.getId());
         if (totalEarned == null) {

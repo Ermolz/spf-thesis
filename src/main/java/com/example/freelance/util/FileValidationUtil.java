@@ -86,41 +86,17 @@ public class FileValidationUtil {
         extension = extension.toLowerCase();
         mimeType = mimeType.toLowerCase();
 
-        // PDF
-        if (extension.equals(".pdf") && mimeType.equals("application/pdf")) {
-            return true;
-        }
-        // DOC
-        if (extension.equals(".doc") && mimeType.equals("application/msword")) {
-            return true;
-        }
-        // DOCX
-        if (extension.equals(".docx") && mimeType.contains("wordprocessingml")) {
-            return true;
-        }
-        // JPEG/JPG
-        if ((extension.equals(".jpg") || extension.equals(".jpeg")) && 
-            (mimeType.equals("image/jpeg") || mimeType.equals("image/jpg"))) {
-            return true;
-        }
-        // PNG
-        if (extension.equals(".png") && mimeType.equals("image/png")) {
-            return true;
-        }
-        // GIF
-        if (extension.equals(".gif") && mimeType.equals("image/gif")) {
-            return true;
-        }
-        // ZIP
-        if (extension.equals(".zip") && mimeType.equals("application/zip")) {
-            return true;
-        }
-        // RAR
-        if (extension.equals(".rar") && (mimeType.equals("application/x-rar-compressed") || mimeType.equals("application/vnd.rar"))) {
-            return true;
-        }
-
-        return false;
+        return switch (extension) {
+            case ".pdf" -> mimeType.equals("application/pdf");
+            case ".doc" -> mimeType.equals("application/msword");
+            case ".docx" -> mimeType.contains("wordprocessingml");
+            case ".jpg", ".jpeg" -> mimeType.equals("image/jpeg") || mimeType.equals("image/jpg");
+            case ".png" -> mimeType.equals("image/png");
+            case ".gif" -> mimeType.equals("image/gif");
+            case ".zip" -> mimeType.equals("application/zip");
+            case ".rar" -> mimeType.equals("application/x-rar-compressed") || mimeType.equals("application/vnd.rar");
+            default -> false;
+        };
     }
 
     public Set<String> getAllowedExtensions() {

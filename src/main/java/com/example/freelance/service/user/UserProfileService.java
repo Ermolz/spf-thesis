@@ -15,10 +15,13 @@ import com.example.freelance.repository.user.FreelancerProfileRepository;
 import com.example.freelance.repository.user.UserRepository;
 import com.example.freelance.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,6 +123,28 @@ public class UserProfileService {
 
     private ClientProfileResponse mapClientToResponse(ClientProfile profile) {
         return clientProfileMapper.toResponse(profile);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FreelancerProfileResponse> searchFreelancers(
+            BigDecimal minRating,
+            BigDecimal maxRating,
+            BigDecimal minHourlyRate,
+            BigDecimal maxHourlyRate,
+            String currency,
+            List<String> skills,
+            Pageable pageable) {
+        Page<FreelancerProfile> profiles;
+        
+        if (skills != null && !skills.isEmpty()) {
+            profiles = freelancerProfileRepository.searchFreelancersWithMultipleSkills(
+                    minRating, maxRating, minHourlyRate, maxHourlyRate, currency, skills, pageable);
+        } else {
+            profiles = freelancerProfileRepository.searchFreelancers(
+                    minRating, maxRating, minHourlyRate, maxHourlyRate, currency, null, pageable);
+        }
+        
+        return profiles.map(this::mapFreelancerToResponse);
     }
 }
 

@@ -4,9 +4,12 @@ import com.example.freelance.common.dto.ApiResponse;
 import com.example.freelance.common.util.ResponseUtil;
 import com.example.freelance.domain.project.ProjectStatus;
 import com.example.freelance.dto.project.CreateProjectRequest;
+import com.example.freelance.dto.project.InviteFreelancerRequest;
 import com.example.freelance.dto.project.ProjectResponse;
 import com.example.freelance.dto.project.UpdateProjectRequest;
+import com.example.freelance.dto.proposal.ProposalResponse;
 import com.example.freelance.service.project.ProjectService;
+import com.example.freelance.service.proposal.ProposalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "Bearer Authentication")
 public class ProjectController {
     private final ProjectService projectService;
+    private final ProposalService proposalService;
 
     @Operation(
             summary = "Create a new project",
@@ -356,5 +360,42 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<ProjectResponse>> publishProject(@PathVariable Long id) {
         ProjectResponse response = projectService.publishProject(id);
         return ResponseEntity.ok(ResponseUtil.successWithTimestamp(response));
+    }
+
+    @Operation(
+            summary = "Invite freelancer to project",
+            description = """
+                    Invites a freelancer to submit a proposal for the project. Only the project owner (client) can invite freelancers.
+                    
+                    **Invitation Process:**
+                    1. Validates project exists and client is the owner
+                    2. Validates freelancer exists
+                    3. If project is DRAFT, automatically publishes it to OPEN
+                    4. Creates a proposal with PENDING status on behalf of the freelancer
+                    5. Freelancer can then accept or modify the proposal
+                    
+                    **Note:**
+                    - If project is DRAFT, it will be automatically published
+                    - Creates a proposal that the freelancer can accept or modify
+                    - Cannot invite if proposal already exists for this freelancer and project
+                    """,
+            parameters = {
+                    @Parameter(name = "projectId", description = "Project unique identifier", required = true, example = "1")
+            }
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Freelancer successfully invited"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request - Invalid project status or data"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Not the project owner"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Project or freelancer not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflict - Proposal already exists")
+    })
+    @PostMapping("/{projectId}/invite")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ApiResponse<ProposalResponse>> inviteFreelancer(
+            @PathVariable Long projectId,
+            @Valid @RequestBody InviteFreelancerRequest request) {
+        ProposalResponse response = proposalService.inviteFreelancer(projectId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ResponseUtil.successWithTimestamp(response));
     }
 }

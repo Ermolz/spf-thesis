@@ -34,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -165,7 +164,6 @@ public class TaskService {
             throw new BadRequestException("File cannot be empty", "EMPTY_FILE");
         }
 
-        // Validate file type and MIME type
         try {
             fileValidationUtil.validateFile(file);
         } catch (IllegalArgumentException e) {
@@ -219,7 +217,7 @@ public class TaskService {
         List<TaskAttachment> attachments = taskAttachmentRepository.findByTaskId(taskId);
         return attachments.stream()
                 .map(taskAttachmentMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private void validateAssignmentAccess(Assignment assignment, Long userId) {
@@ -240,7 +238,7 @@ public class TaskService {
         List<TaskAttachmentResponse> attachments = taskAttachmentRepository.findByTaskId(task.getId())
                 .stream()
                 .map(taskAttachmentMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
         response.setAttachments(attachments);
         return response;
     }

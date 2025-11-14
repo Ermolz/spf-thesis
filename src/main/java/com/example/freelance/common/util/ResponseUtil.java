@@ -7,6 +7,10 @@ import org.springframework.data.domain.Page;
 
 public class ResponseUtil {
 
+    private ResponseUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.success(data);
     }

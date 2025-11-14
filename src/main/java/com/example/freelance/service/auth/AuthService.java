@@ -1,6 +1,5 @@
 package com.example.freelance.service.auth;
 
-import com.example.freelance.common.exception.BadRequestException;
 import com.example.freelance.common.exception.ConflictException;
 import com.example.freelance.common.exception.UnauthorizedException;
 import com.example.freelance.domain.user.ClientProfile;

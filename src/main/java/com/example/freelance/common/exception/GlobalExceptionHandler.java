@@ -23,10 +23,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.example.freelance.controller")
+@io.swagger.v3.oas.annotations.Hidden
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
                             .timestamp(Instant.now())
                             .build();
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         ApiResponse<Void> response = ApiResponse.error(errors);
         return ResponseEntity.badRequest().body(response);
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
                             .timestamp(Instant.now())
                             .build();
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         ApiResponse<Void> response = ApiResponse.error(errors);
         return ResponseEntity.badRequest().body(response);
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
             Enum<?>[] enumConstants = enumClass.getEnumConstants();
             String validValues = java.util.Arrays.stream(enumConstants)
                     .map(Enum::name)
-                    .collect(Collectors.joining(", "));
+                    .collect(java.util.stream.Collectors.joining(", "));
             message += String.format("Valid values are: %s", validValues);
         } else {
             message += String.format("Expected type: %s", ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
@@ -215,13 +215,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGenericException(
             Exception ex,
             HttpServletRequest request) {
-        log.error("Unexpected error occurred", ex);
+        String path = request.getRequestURI();
+        
+        log.error("=".repeat(80));
+        log.error("Unexpected error occurred at path: {}", path);
+        log.error("Exception type: {}", ex.getClass().getName());
+        log.error("Exception message: {}", ex.getMessage());
+        if (ex.getCause() != null) {
+            log.error("Caused by type: {}", ex.getCause().getClass().getName());
+            log.error("Caused by message: {}", ex.getCause().getMessage());
+        }
+        log.error("Full stack trace:", ex);
+        log.error("=".repeat(80));
 
         ErrorDetail error = ErrorDetail.builder()
                 .code("INTERNAL_ERROR")
-                .message("An unexpected error occurred")
+                .message("An unexpected error occurred: " + ex.getMessage())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .path(request.getRequestURI())
+                .path(path)
                 .timestamp(Instant.now())
                 .build();
 

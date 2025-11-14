@@ -4,6 +4,10 @@ import org.slf4j.MDC;
 
 public class MdcUtil {
 
+    private MdcUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     private static final String TRACE_ID_KEY = "traceId";
     private static final String USER_ID_KEY = "userId";
     private static final String OPERATION_KEY = "operation";

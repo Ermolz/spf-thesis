@@ -1,8 +1,6 @@
 package com.example.freelance.mapper.task;
 
 import com.example.freelance.domain.task.Task;
-import com.example.freelance.domain.task.TaskAttachment;
-import com.example.freelance.dto.task.TaskAttachmentResponse;
 import com.example.freelance.dto.task.TaskResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

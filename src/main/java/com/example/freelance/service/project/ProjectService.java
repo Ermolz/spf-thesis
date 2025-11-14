@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
+    private static final String PROJECT_RESOURCE_NAME = "Project";
     private final ProjectRepository projectRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
@@ -79,7 +80,7 @@ public class ProjectService {
     public ProjectResponse updateProject(Long projectId, UpdateProjectRequest request) {
         UserPrincipal userPrincipal = getCurrentUser();
         Project project = projectRepository.findByIdAndClientId(projectId, userPrincipal.getId())
-                .orElseThrow(() -> new NotFoundException("Project", projectId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
 
         if (project.getStatus() == ProjectStatus.COMPLETED || project.getStatus() == ProjectStatus.CANCELLED) {
             throw new BadRequestException("Cannot update completed or cancelled project", "PROJECT_ALREADY_FINALIZED");
@@ -118,7 +119,6 @@ public class ProjectService {
             validateStatusTransition(project.getStatus(), request.getStatus());
             project.setStatus(request.getStatus());
             
-            // Log status change
             MdcUtil.setUserId(userPrincipal.getId());
             MdcUtil.setOperation("UPDATE_PROJECT_STATUS");
             log.info("Project status changed: projectId={}, title={}, oldStatus={}, newStatus={}, changedBy={}", 
@@ -133,7 +133,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getProjectById(Long projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project", projectId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
         return mapToResponse(project);
     }
 
@@ -187,7 +187,7 @@ public class ProjectService {
     public void deleteProject(Long projectId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Project project = projectRepository.findByIdAndClientId(projectId, userPrincipal.getId())
-                .orElseThrow(() -> new NotFoundException("Project", projectId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
 
         if (project.getStatus() == ProjectStatus.IN_PROGRESS) {
             throw new BadRequestException("Cannot delete project in progress", "PROJECT_IN_PROGRESS");
@@ -200,7 +200,7 @@ public class ProjectService {
     public ProjectResponse publishProject(Long projectId) {
         UserPrincipal userPrincipal = getCurrentUser();
         Project project = projectRepository.findByIdAndClientId(projectId, userPrincipal.getId())
-                .orElseThrow(() -> new NotFoundException("Project", projectId.toString()));
+                .orElseThrow(() -> new NotFoundException(PROJECT_RESOURCE_NAME, projectId.toString()));
 
         if (project.getStatus() != ProjectStatus.DRAFT) {
             throw new BadRequestException("Only draft projects can be published", "INVALID_STATUS_TRANSITION");
