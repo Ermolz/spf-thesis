@@ -179,7 +179,7 @@ public class ProjectService {
         UserPrincipal userPrincipal = getCurrentUser();
         Role userRole = userPrincipal.getRole();
         
-        ProjectStatus searchStatus = params.getStatus() != null ? params.getStatus() : ProjectStatus.OPEN;
+        ProjectStatus searchStatus = params.getStatus();
         if (searchStatus == ProjectStatus.DRAFT && userRole != Role.CLIENT && userRole != Role.ADMIN) {
             searchStatus = ProjectStatus.OPEN;
         }

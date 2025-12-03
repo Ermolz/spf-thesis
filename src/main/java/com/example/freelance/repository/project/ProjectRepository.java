@@ -27,13 +27,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Page<Project> findByClientIdAndStatus(Long clientId, ProjectStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"client.user", "category", "tags"})
-    @Query("SELECT p FROM Project p WHERE p.status = :status " +
-           "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
-           "AND p.budgetMax >= COALESCE(:minBudget, p.budgetMax) " +
-           "AND p.budgetMin <= COALESCE(:maxBudget, p.budgetMin) " +
-           "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds)) " +
-           "AND p.deadline >= COALESCE(:minDeadline, p.deadline) " +
-           "AND p.deadline <= COALESCE(:maxDeadline, p.deadline)")
+    @Query("SELECT p FROM Project p WHERE (:status IS NULL OR p.status = :status) " +
+            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND p.budgetMax >= COALESCE(:minBudget, p.budgetMax) " +
+            "AND p.budgetMin <= COALESCE(:maxBudget, p.budgetMin) " +
+            "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds)) " +
+            "AND p.deadline >= COALESCE(:minDeadline, p.deadline) " +
+            "AND p.deadline <= COALESCE(:maxDeadline, p.deadline)")
     Page<Project> searchProjects(
             @Param("status") ProjectStatus status,
             @Param("categoryId") Long categoryId,
