@@ -6,15 +6,23 @@ import com.example.freelance.common.exception.NotFoundException;
 import com.example.freelance.domain.task.Task;
 import com.example.freelance.domain.user.User;
 import com.example.freelance.domain.user.UserStatus;
+import com.example.freelance.dto.task.TaskResponse;
+import com.example.freelance.dto.user.UserResponse;
+import com.example.freelance.mapper.task.TaskMapper;
+import com.example.freelance.mapper.user.UserMapper;
 import com.example.freelance.repository.task.TaskRepository;
 import com.example.freelance.repository.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ModeratorController {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskMapper taskMapper;
+    private final UserMapper userMapper;
 
     @Operation(
             summary = "Block a task",
@@ -95,6 +105,32 @@ public class ModeratorController {
         userRepository.save(user);
 
         return ResponseEntity.ok(ResponseUtil.success("User unblocked successfully"));
+    }
+
+    @Operation(
+            summary = "Get all tasks",
+            description = "Retrieves all tasks for moderators. Only moderators can perform this action."
+    )
+    @GetMapping("/tasks")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ApiResponse<Page<TaskResponse>>> getAllTasks(
+            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<Task> tasks = taskRepository.findAll(pageable);
+        Page<TaskResponse> response = tasks.map(taskMapper::toResponse);
+        return ResponseEntity.ok(ResponseUtil.successWithTimestamp(response));
+    }
+
+    @Operation(
+            summary = "Get all users",
+            description = "Retrieves all users for moderators. Only moderators can perform this action."
+    )
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public ResponseEntity<ApiResponse<Page<UserResponse>>> getAllUsers(
+            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
+        Page<UserResponse> response = users.map(userMapper::toResponse);
+        return ResponseEntity.ok(ResponseUtil.successWithTimestamp(response));
     }
 }
 

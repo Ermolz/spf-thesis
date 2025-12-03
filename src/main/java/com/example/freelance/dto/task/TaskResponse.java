@@ -21,6 +21,7 @@ public class TaskResponse {
     private TaskStatus status;
     private Instant deadline;
     private List<TaskAttachmentResponse> attachments;
+    private Boolean isBlocked;
     private Instant createdAt;
     private Instant updatedAt;
 }

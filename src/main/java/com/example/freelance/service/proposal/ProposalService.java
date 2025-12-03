@@ -4,6 +4,8 @@ import com.example.freelance.common.exception.BadRequestException;
 import com.example.freelance.common.exception.ConflictException;
 import com.example.freelance.common.exception.ForbiddenException;
 import com.example.freelance.common.exception.NotFoundException;
+import com.example.freelance.domain.assignment.Assignment;
+import com.example.freelance.domain.assignment.AssignmentStatus;
 import com.example.freelance.domain.project.Project;
 import com.example.freelance.domain.project.ProjectStatus;
 import com.example.freelance.domain.proposal.Proposal;
@@ -15,6 +17,7 @@ import com.example.freelance.dto.proposal.ProposalResponse;
 import com.example.freelance.dto.proposal.UpdateProposalRequest;
 import com.example.freelance.dto.project.InviteFreelancerRequest;
 import com.example.freelance.mapper.proposal.ProposalMapper;
+import com.example.freelance.repository.assignment.AssignmentRepository;
 import com.example.freelance.repository.project.ProjectRepository;
 import com.example.freelance.repository.proposal.ProposalRepository;
 import com.example.freelance.repository.user.ClientProfileRepository;
@@ -24,6 +27,7 @@ import com.example.freelance.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +47,7 @@ public class ProposalService {
     private final ProjectRepository projectRepository;
     private final FreelancerProfileRepository freelancerProfileRepository;
     private final ClientProfileRepository clientProfileRepository;
+    private final AssignmentRepository assignmentRepository;
     private final ProposalMapper proposalMapper;
 
     @Transactional
@@ -193,6 +198,26 @@ public class ProposalService {
         MdcUtil.clearCustomValues();
         projectRepository.save(project);
 
+
+        try {
+            if (!assignmentRepository.existsByProjectId(project.getId()) && 
+                assignmentRepository.findByProposalId(proposal.getId()).isEmpty()) {
+                Assignment assignment = new Assignment();
+                assignment.setProject(project);
+                assignment.setFreelancer(proposal.getFreelancer());
+                assignment.setProposal(proposal);
+                assignment.setStartDate(Instant.now());
+                assignment.setEndDate(null); // Can be set later
+                assignment.setStatus(AssignmentStatus.ACTIVE);
+                assignmentRepository.save(assignment);
+                log.info("Assignment automatically created: assignmentId={}, proposalId={}, projectId={}", 
+                        assignment.getId(), proposalId, project.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to automatically create assignment for proposal {}: {}", proposalId, e.getMessage());
+  
+        }
+
         return mapToResponse(proposal);
     }
 
@@ -288,7 +313,6 @@ public class ProposalService {
             throw new ConflictException("Proposal already exists for this freelancer and project", "PROPOSAL_ALREADY_EXISTS");
         }
 
-        // If project is DRAFT, publish it first
         if (project.getStatus() == ProjectStatus.DRAFT) {
             project.setStatus(ProjectStatus.OPEN);
             projectRepository.save(project);
