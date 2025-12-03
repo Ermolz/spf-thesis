@@ -20,18 +20,31 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @EntityGraph(attributePaths = {"client.user", "category", "tags"})
     Page<Project> findByStatus(ProjectStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"client.user", "category", "tags"})
-    Page<Project> findByClientId(Long clientId, Pageable pageable);
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN FETCH p.client c " +
+           "LEFT JOIN FETCH c.user " +
+           "LEFT JOIN FETCH p.category " +
+           "LEFT JOIN FETCH p.tags " +
+           "WHERE p.client.id = :clientId")
+    Page<Project> findByClientId(@Param("clientId") Long clientId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"client.user", "category", "tags"})
-    Page<Project> findByClientIdAndStatus(Long clientId, ProjectStatus status, Pageable pageable);
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN FETCH p.client c " +
+           "LEFT JOIN FETCH c.user " +
+           "LEFT JOIN FETCH p.category " +
+           "LEFT JOIN FETCH p.tags " +
+           "WHERE p.client.id = :clientId AND p.status = :status")
+    Page<Project> findByClientIdAndStatus(
+            @Param("clientId") Long clientId, 
+            @Param("status") ProjectStatus status, 
+            Pageable pageable);
 
     @EntityGraph(attributePaths = {"client.user", "category", "tags"})
     @Query("SELECT p FROM Project p WHERE p.status = :status " +
            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
            "AND p.budgetMax >= COALESCE(:minBudget, p.budgetMax) " +
            "AND p.budgetMin <= COALESCE(:maxBudget, p.budgetMin) " +
-           "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds)) " +
+           "AND (:tagIds IS NULL OR EXISTS (SELECT 1 FROM p.tags t WHERE t.id IN :tagIds)) " +
            "AND p.deadline >= COALESCE(:minDeadline, p.deadline) " +
            "AND p.deadline <= COALESCE(:maxDeadline, p.deadline)")
     Page<Project> searchProjects(

@@ -167,7 +167,7 @@ public class ChatService {
         return mapMessageToResponse(message);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<MessageResponse> getConversationMessages(Long conversationId, Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
         Conversation conversation = conversationRepository.findById(conversationId)
@@ -180,7 +180,7 @@ public class ChatService {
             throw new ForbiddenException("Access denied to this conversation", "ACCESS_DENIED");
         }
 
-        Page<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, pageable);
+        Page<Message> messages = messageRepository.findByConversationId(conversationId, pageable);
 
         messageRepository.markMessagesAsRead(conversationId, userPrincipal.getId());
 
