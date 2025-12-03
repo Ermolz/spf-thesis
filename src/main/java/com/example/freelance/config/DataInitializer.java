@@ -2,6 +2,7 @@ package com.example.freelance.config;
 
 import com.example.freelance.domain.assignment.Assignment;
 import com.example.freelance.domain.assignment.AssignmentStatus;
+import com.example.freelance.domain.chat.Conversation;
 import com.example.freelance.domain.payment.Payment;
 import com.example.freelance.domain.payment.PaymentStatus;
 import com.example.freelance.domain.payment.PaymentType;
@@ -22,6 +23,7 @@ import com.example.freelance.domain.user.Role;
 import com.example.freelance.domain.user.User;
 import com.example.freelance.domain.user.UserStatus;
 import com.example.freelance.repository.assignment.AssignmentRepository;
+import com.example.freelance.repository.chat.ConversationRepository;
 import com.example.freelance.repository.payment.PaymentRepository;
 import com.example.freelance.repository.project.CategoryRepository;
 import com.example.freelance.repository.project.ProjectRepository;
@@ -68,6 +70,7 @@ public class DataInitializer {
     private final PaymentRepository paymentRepository;
     private final ReviewRepository reviewRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ConversationRepository conversationRepository;
 
     @Bean
     @Transactional
@@ -334,6 +337,22 @@ public class DataInitializer {
                     "Great client to work with. Clear communication and timely payments."
             );
 
+            createConversation(
+                    assignment1,
+                    project1,
+                    clientProfile1,
+                    freelancerProfile1
+            );
+
+            // Scenario 2: Active conversation regarding Assignment 2
+            // (Client 2 talking to Freelancer 2 about Project 3)
+            createConversation(
+                    assignment2,
+                    project3, // Note: assignment2 is linked to project3 in your existing code
+                    clientProfile2,
+                    freelancerProfile2
+            );
+
             log.info("Test data initialization completed successfully!");
             log.info("Created:");
             log.info("  - {} users ({} clients, {} freelancers)", 
@@ -349,6 +368,24 @@ public class DataInitializer {
             log.info("  - {} payments", paymentRepository.count());
             log.info("  - {} reviews", reviewRepository.count());
         };
+    }
+
+    private void createConversation(Assignment assignment, Project project,
+                                    ClientProfile client, FreelancerProfile freelancer) {
+        Conversation conversation = new Conversation();
+
+        // We populate all fields based on your table schema
+        conversation.setAssignment(assignment); // specific assignment context
+        conversation.setProject(project);       // specific project context
+        conversation.setClient(client);         // participant 1
+        conversation.setFreelancer(freelancer); // participant 2
+
+        // Timestamps are usually handled by @CreationTimestamp in the entity,
+        // but if you need to force them for seed data:
+        conversation.setCreatedAt(Instant.now());
+        conversation.setUpdatedAt(Instant.now());
+
+        conversationRepository.save(conversation);
     }
 
     private Category createCategory(String name, String description) {
