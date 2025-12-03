@@ -156,6 +156,10 @@ public class DataInitializer {
                     "USD"
             );
 
+            // Create Users - Admin and Moderator
+            createUser("admin@example.com", "admin123", Role.ADMIN);
+            createUser("moderator@example.com", "moderator123", Role.MODERATOR);
+
             // Create Projects
             Project project1 = createProject(new ProjectData(
                     clientProfile1,

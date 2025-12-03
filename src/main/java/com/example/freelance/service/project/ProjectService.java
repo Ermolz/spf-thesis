@@ -185,15 +185,25 @@ public class ProjectService {
         }
 
         List<Long> tagIdsParam = (params.getTagIds() == null || params.getTagIds().isEmpty()) ? null : params.getTagIds();
+        Long categoryIdParam = (params.getCategoryId() == null || params.getCategoryId() <= 0) ? null : params.getCategoryId();
+        
+        // Используем крайние значения для deadline, чтобы PostgreSQL мог определить тип параметра
+        // Если параметр null, используем разумные крайние значения в пределах диапазона PostgreSQL timestamp
+        Instant minDeadlineParam = params.getMinDeadline() != null 
+                ? params.getMinDeadline() 
+                : Instant.ofEpochSecond(0); // 1970-01-01T00:00:00Z
+        Instant maxDeadlineParam = params.getMaxDeadline() != null 
+                ? params.getMaxDeadline() 
+                : Instant.parse("9999-12-31T23:59:59.999999Z"); // Максимальная дата в пределах PostgreSQL timestamp
 
         Page<Project> projects = projectRepository.searchProjects(
                 searchStatus,
-                params.getCategoryId(),
+                categoryIdParam,
                 params.getMinBudget(),
                 params.getMaxBudget(),
                 tagIdsParam,
-                params.getMinDeadline(),
-                params.getMaxDeadline(),
+                minDeadlineParam,
+                maxDeadlineParam,
                 pageable
         );
 

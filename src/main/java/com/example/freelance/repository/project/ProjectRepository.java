@@ -45,8 +45,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             "AND p.budgetMax >= COALESCE(:minBudget, p.budgetMax) " +
             "AND p.budgetMin <= COALESCE(:maxBudget, p.budgetMin) " +
             "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds)) " +
-            "AND p.deadline >= COALESCE(:minDeadline, p.deadline) " +
-            "AND p.deadline <= COALESCE(:maxDeadline, p.deadline)")
+            "AND (p.deadline IS NULL OR p.deadline >= :minDeadline) " +
+            "AND (p.deadline IS NULL OR p.deadline <= :maxDeadline)")
     Page<Project> searchProjects(
             @Param("status") ProjectStatus status,
             @Param("categoryId") Long categoryId,
