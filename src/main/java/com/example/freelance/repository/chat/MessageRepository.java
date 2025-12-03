@@ -13,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
-    Page<Message> findByConversationIdOrderByCreatedAtAsc(Long conversationId, Pageable pageable);
+    Page<Message> findByConversationId(Long conversationId, Pageable pageable);
 
     @Query("SELECT COUNT(m) FROM Message m WHERE m.conversation.id = :conversationId AND m.isRead = false AND m.sender.id != :userId")
     long countUnreadMessages(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
