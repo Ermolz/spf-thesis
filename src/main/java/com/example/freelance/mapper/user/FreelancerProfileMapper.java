@@ -10,6 +10,7 @@ public interface FreelancerProfileMapper {
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "skills", ignore = true)
     FreelancerProfileResponse toResponse(FreelancerProfile profile);
 }
 

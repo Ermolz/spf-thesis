@@ -15,6 +15,7 @@ import com.example.freelance.mapper.assignment.AssignmentMapper;
 import com.example.freelance.repository.assignment.AssignmentRepository;
 import com.example.freelance.repository.project.ProjectRepository;
 import com.example.freelance.repository.proposal.ProposalRepository;
+import com.example.freelance.repository.user.FreelancerProfileRepository;
 import com.example.freelance.common.util.MdcUtil;
 import com.example.freelance.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final ProposalRepository proposalRepository;
     private final ProjectRepository projectRepository;
+    private final FreelancerProfileRepository freelancerProfileRepository;
     private final AssignmentMapper assignmentMapper;
 
     @Transactional
@@ -152,7 +154,9 @@ public class AssignmentService {
     @Transactional(readOnly = true)
     public Page<AssignmentResponse> getMyAssignments(Pageable pageable) {
         UserPrincipal userPrincipal = getCurrentUser();
-        Page<Assignment> assignmentPage = assignmentRepository.findByFreelancerId(userPrincipal.getId(), pageable);
+        var freelancer = freelancerProfileRepository.findByUserId(userPrincipal.getId())
+                .orElseThrow(() -> new ForbiddenException("Freelancer profile not found", "FREELANCER_PROFILE_NOT_FOUND"));
+        Page<Assignment> assignmentPage = assignmentRepository.findByFreelancerId(freelancer.getId(), pageable);
         return assignmentPage.map(this::mapToResponse);
     }
 

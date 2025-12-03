@@ -18,6 +18,7 @@ public class ProposalResponse {
     private Long projectId;
     private String projectTitle;
     private Long freelancerId;
+    private Long freelancerUserId;
     private String freelancerEmail;
     private String freelancerDisplayName;
     private String coverLetter;

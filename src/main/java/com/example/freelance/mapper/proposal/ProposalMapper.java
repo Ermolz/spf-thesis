@@ -11,6 +11,7 @@ public interface ProposalMapper {
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectTitle", source = "project.title")
     @Mapping(target = "freelancerId", source = "freelancer.id")
+    @Mapping(target = "freelancerUserId", source = "freelancer.user.id")
     @Mapping(target = "freelancerEmail", source = "freelancer.user.email")
     @Mapping(target = "freelancerDisplayName", source = "freelancer.displayName")
     ProposalResponse toResponse(Proposal proposal);

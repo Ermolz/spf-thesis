@@ -72,12 +72,6 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PROCESSING);
         payment = paymentRepository.save(payment);
 
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         payment.setStatus(PaymentStatus.COMPLETED);
         payment = paymentRepository.save(payment);
         

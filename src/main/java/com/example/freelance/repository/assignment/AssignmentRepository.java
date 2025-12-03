@@ -25,7 +25,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     @Query("SELECT a FROM Assignment a WHERE a.project.client.user.id = :clientId")
     Page<Assignment> findByClientId(@Param("clientId") Long clientId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"project.client.user", "freelancer.user", "proposal"})
+    @EntityGraph(attributePaths = {"project.client.user", "freelancer.user", "freelancer.skills", "proposal"})
     @Query("SELECT a FROM Assignment a WHERE a.project.client.user.id = :clientId AND a.status = :status")
     Page<Assignment> findByClientIdAndStatus(@Param("clientId") Long clientId, @Param("status") AssignmentStatus status, Pageable pageable);
     

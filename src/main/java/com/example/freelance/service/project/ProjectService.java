@@ -8,13 +8,17 @@ import com.example.freelance.domain.project.Project;
 import com.example.freelance.domain.project.ProjectStatus;
 import com.example.freelance.domain.project.Tag;
 import com.example.freelance.domain.user.ClientProfile;
+import com.example.freelance.domain.user.Role;
 import com.example.freelance.dto.project.CreateProjectRequest;
 import com.example.freelance.dto.project.ProjectResponse;
+import com.example.freelance.dto.project.SearchProjectsRequest;
+import com.example.freelance.dto.project.SearchProjectsParams;
 import com.example.freelance.dto.project.UpdateProjectRequest;
 import com.example.freelance.mapper.project.ProjectMapper;
 import com.example.freelance.repository.project.CategoryRepository;
 import com.example.freelance.repository.project.ProjectRepository;
 import com.example.freelance.repository.project.TagRepository;
+import com.example.freelance.repository.proposal.ProposalRepository;
 import com.example.freelance.repository.user.ClientProfileRepository;
 import com.example.freelance.common.util.MdcUtil;
 import com.example.freelance.security.UserPrincipal;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +46,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
+    private final ProposalRepository proposalRepository;
     private final ClientProfileRepository clientProfileRepository;
     private final ProjectMapper projectMapper;
 
@@ -53,11 +59,11 @@ public class ProjectService {
 
         Project project = new Project();
         project.setClient(client);
-        project.setTitle(request.getTitle());
-        project.setDescription(request.getDescription());
+        project.setTitle(request.getTitle() != null ? request.getTitle().trim() : null);
+        project.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
         project.setBudgetMin(request.getBudgetMin());
         project.setBudgetMax(request.getBudgetMax());
-        project.setCurrency(request.getCurrency().toUpperCase());
+        project.setCurrency(request.getCurrency() != null ? request.getCurrency().toUpperCase().trim() : null);
         project.setDeadline(request.getDeadline());
         project.setStatus(ProjectStatus.DRAFT);
 
@@ -87,10 +93,10 @@ public class ProjectService {
         }
 
         if (request.getTitle() != null) {
-            project.setTitle(request.getTitle());
+            project.setTitle(request.getTitle().trim());
         }
         if (request.getDescription() != null) {
-            project.setDescription(request.getDescription());
+            project.setDescription(request.getDescription().trim());
         }
         if (request.getBudgetMin() != null || request.getBudgetMax() != null) {
             BigDecimal budgetMin = request.getBudgetMin() != null ? request.getBudgetMin() : project.getBudgetMin();
@@ -153,32 +159,43 @@ public class ProjectService {
             BigDecimal minBudget,
             BigDecimal maxBudget,
             List<Long> tagIds,
+            Instant minDeadline,
+            Instant maxDeadline,
             Pageable pageable) {
-        ProjectStatus searchStatus = status != null ? status : ProjectStatus.OPEN;
+        SearchProjectsParams params = SearchProjectsParams.builder()
+                .status(status)
+                .categoryId(categoryId)
+                .minBudget(minBudget)
+                .maxBudget(maxBudget)
+                .tagIds(tagIds)
+                .minDeadline(minDeadline)
+                .maxDeadline(maxDeadline)
+                .build();
+        
+        return executeSearchProjects(params, pageable);
+    }
 
-        Page<Project> projects;
-
-        if (tagIds != null && !tagIds.isEmpty()) {
-            projects = projectRepository.searchProjectsWithMultipleTags(
-                    searchStatus,
-                    categoryId,
-                    minBudget,
-                    maxBudget,
-                    tagIds,
-                    pageable
-            );
-        } else {
-            Long tagId = tagIds != null && !tagIds.isEmpty() ? tagIds.get(0) : null;
-
-            projects = projectRepository.searchProjects(
-                    searchStatus,
-                    categoryId,
-                    minBudget,
-                    maxBudget,
-                    tagId,
-                    pageable
-            );
+    private Page<ProjectResponse> executeSearchProjects(SearchProjectsParams params, Pageable pageable) {
+        UserPrincipal userPrincipal = getCurrentUser();
+        Role userRole = userPrincipal.getRole();
+        
+        ProjectStatus searchStatus = params.getStatus() != null ? params.getStatus() : ProjectStatus.OPEN;
+        if (searchStatus == ProjectStatus.DRAFT && userRole != Role.CLIENT && userRole != Role.ADMIN) {
+            searchStatus = ProjectStatus.OPEN;
         }
+
+        List<Long> tagIdsParam = (params.getTagIds() == null || params.getTagIds().isEmpty()) ? null : params.getTagIds();
+
+        Page<Project> projects = projectRepository.searchProjects(
+                searchStatus,
+                params.getCategoryId(),
+                params.getMinBudget(),
+                params.getMaxBudget(),
+                tagIdsParam,
+                params.getMinDeadline(),
+                params.getMaxDeadline(),
+                pageable
+        );
 
         return projects.map(this::mapToResponse);
     }
@@ -193,6 +210,8 @@ public class ProjectService {
             throw new BadRequestException("Cannot delete project in progress", "PROJECT_IN_PROGRESS");
         }
 
+        proposalRepository.deleteByProjectId(projectId);
+        
         projectRepository.delete(project);
     }
 

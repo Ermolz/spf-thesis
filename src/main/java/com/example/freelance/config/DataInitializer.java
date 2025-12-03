@@ -9,6 +9,7 @@ import com.example.freelance.domain.project.Category;
 import com.example.freelance.domain.project.Project;
 import com.example.freelance.domain.project.ProjectStatus;
 import com.example.freelance.domain.project.Tag;
+import com.example.freelance.domain.skill.Skill;
 import com.example.freelance.domain.proposal.Proposal;
 import com.example.freelance.domain.proposal.ProposalStatus;
 import com.example.freelance.domain.review.Review;
@@ -25,6 +26,7 @@ import com.example.freelance.repository.payment.PaymentRepository;
 import com.example.freelance.repository.project.CategoryRepository;
 import com.example.freelance.repository.project.ProjectRepository;
 import com.example.freelance.repository.project.TagRepository;
+import com.example.freelance.repository.skill.SkillRepository;
 import com.example.freelance.repository.proposal.ProposalRepository;
 import com.example.freelance.repository.review.ReviewRepository;
 import com.example.freelance.repository.task.TaskRepository;
@@ -58,6 +60,7 @@ public class DataInitializer {
     private final ClientProfileRepository clientProfileRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
+    private final SkillRepository skillRepository;
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
     private final AssignmentRepository assignmentRepository;
@@ -96,6 +99,22 @@ public class DataInitializer {
             Tag seoTag = createTag("SEO");
             createTag("Content Writing");
 
+            // Create Skills
+            Skill javaSkill = createSkill("Java", "Java programming language");
+            Skill springBootSkill = createSkill("Spring Boot", "Spring Boot framework");
+            Skill reactSkill = createSkill("React", "React JavaScript library");
+            createSkill("Node.js", "Node.js runtime environment");
+            Skill postgresSkill = createSkill("PostgreSQL", "PostgreSQL database");
+            Skill dockerSkill = createSkill("Docker", "Docker containerization");
+            Skill figmaSkill = createSkill("Figma", "Figma design tool");
+            Skill photoshopSkill = createSkill("Photoshop", "Adobe Photoshop");
+            Skill seoSkill = createSkill("SEO", "Search Engine Optimization");
+            Skill contentWritingSkill = createSkill("Content Writing", "Content writing and copywriting");
+            Skill uiDesignSkill = createSkill("UI Design", "User Interface Design");
+            Skill uxResearchSkill = createSkill("UX Research", "User Experience Research");
+            Skill copywritingSkill = createSkill("Copywriting", "Copywriting");
+            Skill blogWritingSkill = createSkill("Blog Writing", "Blog writing");
+
             // Create Users - Clients
             User client1 = createUser("client1@example.com", "client123", Role.CLIENT);
             ClientProfile clientProfile1 = createClientProfile(client1, "TechCorp Inc.", "Leading technology company");
@@ -109,7 +128,7 @@ public class DataInitializer {
                     freelancer1,
                     "John Doe - Full Stack Developer",
                     "Experienced full-stack developer with 5+ years of experience in Java, Spring Boot, and React",
-                    Arrays.asList("Java", "Spring Boot", "React", "PostgreSQL", "Docker"),
+                    Arrays.asList(javaSkill, springBootSkill, reactSkill, postgresSkill, dockerSkill),
                     new BigDecimal("50.00"),
                     "USD"
             );
@@ -119,7 +138,7 @@ public class DataInitializer {
                     freelancer2,
                     "Jane Smith - UI/UX Designer",
                     "Creative designer specializing in modern UI/UX design",
-                    Arrays.asList("Figma", "Photoshop", "UI Design", "UX Research"),
+                    Arrays.asList(figmaSkill, photoshopSkill, uiDesignSkill, uxResearchSkill),
                     new BigDecimal("40.00"),
                     "USD"
             );
@@ -129,13 +148,13 @@ public class DataInitializer {
                     freelancer3,
                     "Mike Johnson - Content Writer",
                     "Professional content writer and copywriter",
-                    Arrays.asList("Content Writing", "SEO", "Copywriting", "Blog Writing"),
+                    Arrays.asList(contentWritingSkill, seoSkill, copywritingSkill, blogWritingSkill),
                     new BigDecimal("25.00"),
                     "USD"
             );
 
             // Create Projects
-            Project project1 = createProject(
+            Project project1 = createProject(new ProjectData(
                     clientProfile1,
                     "E-commerce Website Development",
                     "Looking for an experienced developer to build a modern e-commerce platform with payment integration, admin dashboard, and inventory management system.",
@@ -145,10 +164,10 @@ public class DataInitializer {
                     webDev,
                     Arrays.asList(reactTag, nodeTag, postgresTag),
                     Instant.now().plus(90, ChronoUnit.DAYS),
-                    ProjectStatus.OPEN
-            );
+                    ProjectStatus.IN_PROGRESS
+            ));
 
-            createProject(
+            createProject(new ProjectData(
                     clientProfile1,
                     "Mobile App for iOS and Android",
                     "Need a mobile app developer to create a cross-platform mobile application for both iOS and Android platforms.",
@@ -159,9 +178,9 @@ public class DataInitializer {
                     Arrays.asList(reactTag, nodeTag),
                     Instant.now().plus(120, ChronoUnit.DAYS),
                     ProjectStatus.OPEN
-            );
+            ));
 
-            Project project3 = createProject(
+            Project project3 = createProject(new ProjectData(
                     clientProfile2,
                     "Website Redesign",
                     "Looking for a talented designer to redesign our company website with modern UI/UX principles.",
@@ -171,10 +190,10 @@ public class DataInitializer {
                     design,
                     Arrays.asList(figmaTag, photoshopTag),
                     Instant.now().plus(60, ChronoUnit.DAYS),
-                    ProjectStatus.OPEN
-            );
+                    ProjectStatus.IN_PROGRESS
+            ));
 
-            createProject(
+            createProject(new ProjectData(
                     clientProfile2,
                     "SEO Optimization Project",
                     "Need an SEO expert to optimize our website and improve search engine rankings.",
@@ -185,7 +204,7 @@ public class DataInitializer {
                     Arrays.asList(seoTag),
                     Instant.now().plus(45, ChronoUnit.DAYS),
                     ProjectStatus.DRAFT
-            );
+            ));
 
             // Create Proposals
             Proposal proposal1 = createProposal(
@@ -201,7 +220,7 @@ public class DataInitializer {
                     freelancerProfile2,
                     "I can help with the design aspects of your e-commerce platform.",
                     new BigDecimal("3000.00"),
-                    ProposalStatus.PENDING
+                    ProposalStatus.REJECTED
             );
 
             Proposal proposal3 = createProposal(
@@ -366,7 +385,7 @@ public class DataInitializer {
     }
 
     private FreelancerProfile createFreelancerProfile(User user, String displayName, String bio,
-                                                       List<String> skills, BigDecimal hourlyRate, String currency) {
+                                                       List<Skill> skills, BigDecimal hourlyRate, String currency) {
         FreelancerProfile profile = new FreelancerProfile();
         profile.setUser(user);
         profile.setDisplayName(displayName);
@@ -381,12 +400,11 @@ public class DataInitializer {
         return profile;
     }
 
-    private Project createProject(ClientProfile client, String title, String description,
-                                  BigDecimal budgetMin, BigDecimal budgetMax, String currency,
-                                  Category category, List<Tag> tags, Instant deadline, ProjectStatus status) {
-        ProjectData projectData = new ProjectData(client, title, description, budgetMin, budgetMax, 
-                currency, category, tags, deadline, status);
-        return createProject(projectData);
+    private Skill createSkill(String name, String description) {
+        Skill skill = new Skill();
+        skill.setName(name);
+        skill.setDescription(description);
+        return skillRepository.save(skill);
     }
 
     private Project createProject(ProjectData data) {

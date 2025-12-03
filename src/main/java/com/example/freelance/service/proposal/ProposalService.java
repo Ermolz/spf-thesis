@@ -23,6 +23,8 @@ import com.example.freelance.common.util.MdcUtil;
 import com.example.freelance.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,7 +61,10 @@ public class ProposalService {
             throw new BadRequestException("Cannot submit proposal to your own project", "CANNOT_PROPOSE_TO_OWN_PROJECT");
         }
 
-        if (proposalRepository.existsByProjectIdAndFreelancerId(project.getId(), freelancer.getId())) {
+        if (proposalRepository.existsByProjectIdAndFreelancerIdAndStatusNotIn(
+                project.getId(), 
+                freelancer.getId(), 
+                List.of(ProposalStatus.REJECTED, ProposalStatus.WITHDRAWN))) {
             throw new ConflictException("Proposal already exists for this project", "PROPOSAL_ALREADY_EXISTS");
         }
 

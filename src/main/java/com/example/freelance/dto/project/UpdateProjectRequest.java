@@ -1,6 +1,7 @@
 package com.example.freelance.dto.project;
 
 import com.example.freelance.domain.project.ProjectStatus;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -22,9 +23,11 @@ public class UpdateProjectRequest {
     private String description;
 
     @Positive(message = "Minimum budget must be positive")
+    @DecimalMax(value = "9999999999.99", message = "Minimum budget must not exceed 9999999999.99")
     private BigDecimal budgetMin;
 
     @Positive(message = "Maximum budget must be positive")
+    @DecimalMax(value = "9999999999.99", message = "Maximum budget must not exceed 9999999999.99")
     private BigDecimal budgetMax;
 
     @Size(min = 3, max = 3, message = "Currency must be 3 characters")

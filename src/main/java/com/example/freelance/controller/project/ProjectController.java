@@ -301,8 +301,10 @@ public class ProjectController {
             @RequestParam(required = false) java.math.BigDecimal minBudget,
             @RequestParam(required = false) java.math.BigDecimal maxBudget,
             @RequestParam(required = false) java.util.List<Long> tagIds,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant minDeadline,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant maxDeadline,
             @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        Page<ProjectResponse> response = projectService.searchProjects(status, categoryId, minBudget, maxBudget, tagIds, pageable);
+        Page<ProjectResponse> response = projectService.searchProjects(status, categoryId, minBudget, maxBudget, tagIds, minDeadline, maxDeadline, pageable);
         return ResponseEntity.ok(ResponseUtil.success(response));
     }
 

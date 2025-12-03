@@ -1,6 +1,7 @@
 package com.example.freelance.domain.user;
 
 import com.example.freelance.common.domain.BaseEntity;
+import com.example.freelance.domain.skill.Skill;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,10 +29,13 @@ public class FreelancerProfile extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
-    @ElementCollection
-    @CollectionTable(name = "freelancer_skills", joinColumns = @JoinColumn(name = "freelancer_id"))
-    @Column(name = "skill")
-    private List<String> skills = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "freelancer_skills",
+            joinColumns = @JoinColumn(name = "freelancer_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private List<Skill> skills = new ArrayList<>();
 
     @Column(name = "hourly_rate", precision = 10, scale = 2)
     private BigDecimal hourlyRate;
@@ -44,5 +48,8 @@ public class FreelancerProfile extends BaseEntity {
 
     @Column(name = "completed_projects_count")
     private Integer completedProjectsCount = 0;
+
+    @Column(name = "portfolio_file_path")
+    private String portfolioFilePath;
 }
 

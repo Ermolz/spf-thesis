@@ -38,5 +38,8 @@ public class Task extends BaseEntity {
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaskAttachment> attachments = new ArrayList<>();
+
+    @Column(name = "is_blocked", nullable = false)
+    private Boolean isBlocked = false;
 }
 

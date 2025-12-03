@@ -19,7 +19,7 @@ public class UpdateFreelancerProfileRequest {
     @Size(max = 5000, message = "Bio must not exceed 5000 characters")
     private String bio;
 
-    private List<String> skills;
+    private List<Long> skillIds;
 
     @Positive(message = "Hourly rate must be positive")
     private BigDecimal hourlyRate;

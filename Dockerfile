@@ -15,7 +15,10 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN mkdir -p /app/uploads/portfolios /app/uploads/attachments /app/logs && \
+    addgroup -S spring && adduser -S spring -G spring && \
+    chown -R spring:spring /app/uploads /app/logs
+
 USER spring:spring
 
 COPY --from=build /app/build/libs/*.jar app.jar

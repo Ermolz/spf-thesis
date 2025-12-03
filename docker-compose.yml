@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -19,6 +17,7 @@ services:
       retries: 5
     networks:
       - freelance-network
+    restart: unless-stopped
 
   app:
     build:
@@ -39,7 +38,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
+      # Persistent storage for uploaded files (portfolios, task attachments)
       - app_uploads:/app/uploads
+      # Persistent storage for application logs
       - app_logs:/app/logs
     depends_on:
       postgres:
@@ -49,9 +50,15 @@ services:
     restart: unless-stopped
 
 volumes:
+  # PostgreSQL data persistence
   postgres_data:
+    driver: local
+  # Application uploads persistence (portfolios, task attachments)
   app_uploads:
+    driver: local
+
   app_logs:
+    driver: local
 
 networks:
   freelance-network:

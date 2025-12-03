@@ -17,39 +17,21 @@ import java.util.Optional;
 public interface FreelancerProfileRepository extends JpaRepository<FreelancerProfile, Long> {
     Optional<FreelancerProfile> findByUserId(Long userId);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"user", "skills"})
     @Query("SELECT DISTINCT f FROM FreelancerProfile f " +
-           "WHERE (:minRating IS NULL OR f.rating >= :minRating) " +
-           "AND (:maxRating IS NULL OR f.rating <= :maxRating) " +
-           "AND (:minHourlyRate IS NULL OR f.hourlyRate >= :minHourlyRate) " +
-           "AND (:maxHourlyRate IS NULL OR f.hourlyRate <= :maxHourlyRate) " +
+           "WHERE f.rating >= COALESCE(:minRating, f.rating) " +
+           "AND f.rating <= COALESCE(:maxRating, f.rating) " +
+           "AND f.hourlyRate >= COALESCE(:minHourlyRate, f.hourlyRate) " +
+           "AND f.hourlyRate <= COALESCE(:maxHourlyRate, f.hourlyRate) " +
            "AND (:currency IS NULL OR f.currency = :currency) " +
-           "AND (:skill IS NULL OR :skill MEMBER OF f.skills)")
+           "AND (:skillNames IS NULL OR EXISTS (SELECT s FROM f.skills s WHERE s.name IN :skillNames))")
     Page<FreelancerProfile> searchFreelancers(
             @Param("minRating") BigDecimal minRating,
             @Param("maxRating") BigDecimal maxRating,
             @Param("minHourlyRate") BigDecimal minHourlyRate,
             @Param("maxHourlyRate") BigDecimal maxHourlyRate,
             @Param("currency") String currency,
-            @Param("skill") String skill,
-            Pageable pageable
-    );
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query("SELECT DISTINCT f FROM FreelancerProfile f " +
-           "WHERE (:minRating IS NULL OR f.rating >= :minRating) " +
-           "AND (:maxRating IS NULL OR f.rating <= :maxRating) " +
-           "AND (:minHourlyRate IS NULL OR f.hourlyRate >= :minHourlyRate) " +
-           "AND (:maxHourlyRate IS NULL OR f.hourlyRate <= :maxHourlyRate) " +
-           "AND (:currency IS NULL OR f.currency = :currency) " +
-           "AND (:skills IS NULL OR EXISTS (SELECT s FROM f.skills s WHERE s IN :skills))")
-    Page<FreelancerProfile> searchFreelancersWithMultipleSkills(
-            @Param("minRating") BigDecimal minRating,
-            @Param("maxRating") BigDecimal maxRating,
-            @Param("minHourlyRate") BigDecimal minHourlyRate,
-            @Param("maxHourlyRate") BigDecimal maxHourlyRate,
-            @Param("currency") String currency,
-            @Param("skills") List<String> skills,
+            @Param("skillNames") List<String> skillNames,
             Pageable pageable
     );
 }

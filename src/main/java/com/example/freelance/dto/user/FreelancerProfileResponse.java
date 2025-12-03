@@ -24,6 +24,7 @@ public class FreelancerProfileResponse {
     private String currency;
     private BigDecimal rating;
     private Integer completedProjectsCount;
+    private String portfolioFilePath;
     private Instant createdAt;
     private Instant updatedAt;
 }

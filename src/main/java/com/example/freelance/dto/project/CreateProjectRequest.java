@@ -1,6 +1,7 @@
 package com.example.freelance.dto.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -28,10 +29,12 @@ public class CreateProjectRequest {
     private String description;
 
     @Positive(message = "Minimum budget must be positive")
+    @DecimalMax(value = "9999999999.99", message = "Minimum budget must not exceed 9999999999.99")
     @Schema(description = "Minimum budget amount", example = "5000.00")
     private BigDecimal budgetMin;
 
     @Positive(message = "Maximum budget must be positive")
+    @DecimalMax(value = "9999999999.99", message = "Maximum budget must not exceed 9999999999.99")
     @Schema(description = "Maximum budget amount", example = "10000.00")
     private BigDecimal budgetMax;
 

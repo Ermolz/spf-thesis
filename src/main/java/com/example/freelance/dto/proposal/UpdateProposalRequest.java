@@ -1,5 +1,6 @@
 package com.example.freelance.dto.proposal;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ public class UpdateProposalRequest {
     private String coverLetter;
 
     @Positive(message = "Bid amount must be positive")
+    @Digits(integer = 10, fraction = 2, message = "Bid amount can have at most two decimal places and must not exceed 9999999999.99")
     private BigDecimal bidAmount;
 
     @Positive(message = "Estimated duration must be positive")

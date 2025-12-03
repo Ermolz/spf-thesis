@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,30 +29,19 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @EntityGraph(attributePaths = {"client.user", "category", "tags"})
     @Query("SELECT p FROM Project p WHERE p.status = :status " +
            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
-           "AND (:minBudget IS NULL OR p.budgetMax >= :minBudget) " +
-           "AND (:maxBudget IS NULL OR p.budgetMin <= :maxBudget) " +
-           "AND (:tagId IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id = :tagId))")
+           "AND p.budgetMax >= COALESCE(:minBudget, p.budgetMax) " +
+           "AND p.budgetMin <= COALESCE(:maxBudget, p.budgetMin) " +
+           "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds)) " +
+           "AND p.deadline >= COALESCE(:minDeadline, p.deadline) " +
+           "AND p.deadline <= COALESCE(:maxDeadline, p.deadline)")
     Page<Project> searchProjects(
             @Param("status") ProjectStatus status,
             @Param("categoryId") Long categoryId,
             @Param("minBudget") BigDecimal minBudget,
             @Param("maxBudget") BigDecimal maxBudget,
-            @Param("tagId") Long tagId,
-            Pageable pageable
-    );
-
-    @EntityGraph(attributePaths = {"client.user", "category", "tags"})
-    @Query("SELECT p FROM Project p WHERE p.status = :status " +
-           "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
-           "AND (:minBudget IS NULL OR p.budgetMax >= :minBudget) " +
-           "AND (:maxBudget IS NULL OR p.budgetMin <= :maxBudget) " +
-           "AND (:tagIds IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id IN :tagIds))")
-    Page<Project> searchProjectsWithMultipleTags(
-            @Param("status") ProjectStatus status,
-            @Param("categoryId") Long categoryId,
-            @Param("minBudget") BigDecimal minBudget,
-            @Param("maxBudget") BigDecimal maxBudget,
             @Param("tagIds") List<Long> tagIds,
+            @Param("minDeadline") Instant minDeadline,
+            @Param("maxDeadline") Instant maxDeadline,
             Pageable pageable
     );
 

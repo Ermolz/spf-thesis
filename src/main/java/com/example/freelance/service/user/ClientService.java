@@ -2,6 +2,7 @@ package com.example.freelance.service.user;
 
 import com.example.freelance.common.exception.ForbiddenException;
 import com.example.freelance.domain.assignment.AssignmentStatus;
+import com.example.freelance.domain.skill.Skill;
 import com.example.freelance.domain.user.ClientProfile;
 import com.example.freelance.domain.user.FreelancerProfile;
 import com.example.freelance.dto.user.FreelancerProfileResponse;
@@ -72,7 +73,13 @@ public class ClientService {
 
     private FreelancerProfileResponse mapFreelancerToResponse(FreelancerProfile profile) {
         FreelancerProfileResponse response = freelancerProfileMapper.toResponse(profile);
-        response.setSkills(profile.getSkills() != null ? new ArrayList<>(profile.getSkills()) : new ArrayList<>());
+        if (profile.getSkills() != null) {
+            response.setSkills(profile.getSkills().stream()
+                    .map(Skill::getName)
+                    .toList());
+        } else {
+            response.setSkills(new ArrayList<>());
+        }
         return response;
     }
 }

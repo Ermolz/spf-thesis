@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -207,6 +208,33 @@ public class UserProfileController {
         Page<FreelancerProfileResponse> response = userProfileService.searchFreelancers(
                 minRating, maxRating, minHourlyRate, maxHourlyRate, currency, skills, pageable);
         return ResponseEntity.ok(ResponseUtil.success(response));
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Upload portfolio",
+            description = """
+                    Uploads a PDF portfolio file for the authenticated freelancer.
+                    
+                    **Requirements:**
+                    - File must be PDF format
+                    - Maximum file size: 10MB
+                    - Only one portfolio per freelancer (uploading a new one replaces the old one)
+                    """,
+            parameters = {
+                    @io.swagger.v3.oas.annotations.Parameter(name = "file", description = "PDF portfolio file", required = true)
+            }
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Portfolio successfully uploaded"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request - Invalid file type or size"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Only freelancers can upload portfolio")
+    })
+    @PostMapping("/freelancer/portfolio")
+    @PreAuthorize("hasRole('FREELANCER')")
+    public ResponseEntity<ApiResponse<FreelancerProfileResponse>> uploadPortfolio(
+            @RequestParam("file") MultipartFile file) {
+        FreelancerProfileResponse response = userProfileService.uploadPortfolio(file);
+        return ResponseEntity.ok(ResponseUtil.successWithTimestamp(response));
     }
 }
 
